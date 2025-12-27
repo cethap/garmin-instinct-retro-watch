@@ -1,0 +1,14 @@
+# Garmin Connect IQ build artifacts
+bin/
+gen/
+mir/
+internal-mir/
+*.prg
+*.prg.debug.xml
+*.iq
+
+# Developer key
+developer_key
+
+# System Files
+.DS_Store

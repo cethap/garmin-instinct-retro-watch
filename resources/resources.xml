@@ -1,0 +1,6 @@
+<resources>
+    <fonts>
+        <font id="RetroBig" filename="fonts/pixel_large.fnt" filter="0123456789:." />
+        <font id="RetroSmall" filename="fonts/pixel_small.fnt" filter="ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.%:-/ " />
+    </fonts>
+</resources>
