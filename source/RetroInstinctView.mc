@@ -15,6 +15,8 @@ class RetroInstinctView extends WatchUi.WatchFace {
     var heartIcon;
     var yeshuaLogo;
     var dayNames;
+    var dateX;
+    var dateY;
 
     function initialize() {
         WatchFace.initialize();
@@ -22,13 +24,24 @@ class RetroInstinctView extends WatchUi.WatchFace {
         dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
     }
 
-    // Load custom pixel fonts
+    // Load resources and resolve the date position once
     function onLayout(dc as Dc) as Void {
         fontBig = WatchUi.loadResource(Rez.Fonts.RetroBig);
         fontSmall = WatchUi.loadResource(Rez.Fonts.RetroSmall);
         footprintIcon = WatchUi.loadResource(Rez.Drawables.FootprintIcon);
         heartIcon = WatchUi.loadResource(Rez.Drawables.HeartIcon);
         yeshuaLogo = WatchUi.loadResource(Rez.Drawables.Yeshua);
+
+        // Center the date in the subscreen; fall back to the Instinct 2 position.
+        dateX = dc.getWidth() - 32;
+        dateY = 30;
+        if (WatchUi has :getSubscreen) {
+            var subscreen = WatchUi.getSubscreen();
+            if (subscreen != null) {
+                dateX = subscreen.x + subscreen.width / 2;
+                dateY = subscreen.y + subscreen.height / 2;
+            }
+        }
     }
 
     function onUpdate(dc as Dc) as Void {
@@ -55,10 +68,10 @@ class RetroInstinctView extends WatchUi.WatchFace {
         var timeStr = Lang.format("$1$:$2$", [formatHour(clock.hour, settings.is24Hour), clock.min.format("%02d")]);
         dc.drawText(centerX, centerY+10, fontBig, timeStr, Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
 
-        // --- DATE (Top Right, Small) ---
+        // --- DATE (Subscreen, Small) ---
         var info = Gregorian.info(now, Time.FORMAT_SHORT);
         var dateStr = Lang.format("$1$\n$2$", [getDayName(info.day_of_week), info.day.format("%02d")]);
-        dc.drawText(w - 32, 30, fontSmall, dateStr, Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+        dc.drawText(dateX, dateY, fontSmall, dateStr, Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
 
         // --- BATTERY (Top Center, Pixel Icon) ---
         var batPct = (sysStats.battery + 0.5).toNumber();
@@ -73,29 +86,30 @@ class RetroInstinctView extends WatchUi.WatchFace {
             batStr += " " + sysStats.batteryInDays.format("%d") + "d";
         }
 
-        // Draw Battery Icon and Text
-        // Move icon UP to avoid overlap. centerY is 88.
-        dc.drawBitmap(centerX - 55, centerY - 105, yeshuaLogo);
-        drawBattery(dc, centerX - 43, centerY - 55, batPct);
-        dc.drawText(centerX-25, centerY - 20, fontSmall, batStr, Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+        // Logo, battery and battery text share one column left of the subscreen.
+        // Every element is trimmed to its content, so these are real positions.
+        var clusterX = centerX - 23;
+        dc.drawBitmap(clusterX - 32, 5, yeshuaLogo); // 64x24
+        drawBattery(dc, clusterX - 22, 33, batPct); // 44x24 including the terminal
+        dc.drawText(clusterX, 68, fontSmall, batStr, Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
 
         // --- STATS ROW (Bottom) ---
-        // Layout: Steps (Left) | HR (Right)
+        // Layout: Steps (Left) | HR (Right), 32x32 icons above their values
 
-        var iconY = centerY + 45;
-        var textY = iconY + 25;
-        var spacing = 25; // Spacing from center
+        var iconTop = centerY + 29;
+        var textY = centerY + 70;
+        var spacing = 28; // Column offset from center; keeps "12.3K" clear of the HR value
 
         // 1. STEPS (Left)
         var stepStr = formatSteps(activityInfo.steps);
 
         // Draw Footprint Icon
-        dc.drawBitmap(centerX - spacing - 16, iconY - 16, footprintIcon);
+        dc.drawBitmap(centerX - spacing - 16, iconTop, footprintIcon);
         dc.drawText(centerX - spacing, textY, fontSmall, stepStr, Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
 
         // 2. HEART RATE (Right)
         // Draw Heart Icon
-        dc.drawBitmap(centerX + spacing - 16, iconY - 16, heartIcon);
+        dc.drawBitmap(centerX + spacing - 16, iconTop, heartIcon);
         dc.drawText(centerX + spacing, textY, fontSmall, getHeartRate(), Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
     }
 
