@@ -20,6 +20,7 @@ class RetroInstinctView extends WatchUi.WatchFace {
     var ringRadius;
     var boltIcon;
     var phoneOffIcon;
+    var flameIcon;
     var hrFallback;
     var hrFallbackMinute;
 
@@ -32,6 +33,7 @@ class RetroInstinctView extends WatchUi.WatchFace {
         hrFallback = "--";
         hrFallbackMinute = -1;
         phoneOffIcon = [0x1FE, 0x3FF, 0x303, 0x34B, 0x333, 0x333, 0x34B, 0x303, 0x303, 0x3FF, 0x3CF, 0x1FE]; // 10x12
+        flameIcon = [0x010, 0x032, 0x0BA, 0x0BF, 0x1BF, 0x1DF, 0x18F, 0x307, 0x327, 0x377, 0x18E, 0x0FC]; // 10x12
     }
 
     // Load resources and resolve the date position once
@@ -94,8 +96,12 @@ class RetroInstinctView extends WatchUi.WatchFace {
         var charging = (sysStats has :charging) && sysStats.charging;
         drawStatusRow(dc, centerX - 21, 4, RetroFormat.batteryPercent(sysStats.battery), charging);
         dc.drawBitmap(centerX - 78, 18, yeshuaLogo); // 88x36
+        var calStr = RetroFormat.formatCalories(activityInfo.calories);
+        var calLeft = centerX - 32 - (14 + dc.getTextWidthInPixels(calStr, fontSmall)) / 2;
+        drawPixelArt(dc, calLeft, 58, flameIcon, 10);
+        dc.drawText(calLeft + 14, 58, fontSmall, calStr, Graphics.TEXT_JUSTIFY_LEFT);
         if (!settings.phoneConnected) {
-            drawPixelArt(dc, centerX + 8, 58, phoneOffIcon, 10); // right end of the data row
+            drawPixelArt(dc, centerX + 10, 58, phoneOffIcon, 10); // right end of the data row
         }
 
         // --- STATS ROW (Bottom) ---
