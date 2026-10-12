@@ -14,7 +14,7 @@ class RetroInstinctView extends WatchUi.WatchFace {
     var footprintIcon;
     var heartIcon;
     var yeshuaLogo;
-    var dayNames;
+    var dayNames as Array<String>;
     var dateX;
     var dateY;
     var boltIcon;
