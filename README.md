@@ -15,7 +15,7 @@ A custom watch face for the Garmin Instinct 2, featuring a retro pixel-art aesth
 - **Steps**: daily count (`12.3K` from 10,000 steps) and a 10-segment ring around the date that fills toward your step goal.
 - **Heart Rate**: live reading when available, otherwise the latest valid sample; `--` when the watch is off-wrist.
 - **Phone Status**: a crossed-phone icon appears when the phone is disconnected.
-- **Yeshua Fish Icon**: custom decorative element, hand-drawn as native 1-bit pixel art.
+- **Yeshua Fish Icon**: custom decorative element.
 
 ## Device Support
 

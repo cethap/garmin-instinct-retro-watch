@@ -2,5 +2,5 @@
     <bitmap id="LauncherIcon" filename="launcher_icon.svg" dithering="none" />
     <bitmap id="FootprintIcon" filename="footprint.svg" dithering="none" />
     <bitmap id="HeartIcon" filename="heart.svg" dithering="none" />
-    <bitmap id="Yeshua" filename="yeshua.png" dithering="none" />
+    <bitmap id="Yeshua" filename="yeshua.svg" dithering="none" />
 </drawables>
