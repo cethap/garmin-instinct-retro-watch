@@ -83,7 +83,9 @@ class RetroInstinctView extends WatchUi.WatchFace {
         // --- DATE (Subscreen, Small) ---
         var info = Gregorian.info(now, Time.FORMAT_SHORT);
         var dateStr = Lang.format("$1$\n$2$", [getDayName(info.day_of_week), info.day.format("%02d")]);
-        dc.drawText(dateX, dateY, fontSmall, dateStr, Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+        // Center the ink, not the text box, inside the ring: each glyph leaves one empty column
+        // on its right, and the two lines are 23px of ink (12px line + 11px glyph).
+        dc.drawText(dateX + 1, dateY - 11, fontSmall, dateStr, Graphics.TEXT_JUSTIFY_CENTER);
         drawStepRing(dc, dateX, dateY, ringRadius, RetroFormat.stepMeterSegments(activityInfo.steps, activityInfo.stepGoal));
 
         // --- BATTERY (Top Center, Pixel Icon) ---
@@ -146,10 +148,8 @@ class RetroInstinctView extends WatchUi.WatchFace {
     // Reached segments are 3px thick; the rest stay as a 1px track.
     private function drawStepRing(dc as Dc, x as Number, y as Number, radius as Number, filled as Number) as Void {
         for (var i = 0; i < 10; i++) {
-            var start = (90 - i * 36 - 3 + 360) % 360;
-            var end = (start - 30 + 360) % 360;
             dc.setPenWidth(i < filled ? 3 : 1);
-            dc.drawArc(x, y, radius, Graphics.ARC_CLOCKWISE, start, end);
+            dc.drawArc(x, y, radius, Graphics.ARC_CLOCKWISE, RetroFormat.ringSegmentStart(i), RetroFormat.ringSegmentEnd(i));
         }
         dc.setPenWidth(1);
     }

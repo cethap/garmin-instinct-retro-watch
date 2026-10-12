@@ -88,3 +88,14 @@ function stepMeterSegmentsFillsInTenthsAndCaps(logger as Logger) as Boolean {
     logger.debug("999=" + none + " 1000=" + one + " 6400=" + six + " 25000=" + capped);
     return none == 0 && one == 1 && six == 6 && capped == 10;
 }
+
+(:test)
+function stepRingSegmentsStartAtNoonClockwise(logger as Logger) as Boolean {
+    var first = [RetroFormat.ringSegmentStart(0), RetroFormat.ringSegmentEnd(0)];
+    var wrap = [RetroFormat.ringSegmentStart(3), RetroFormat.ringSegmentEnd(3)];
+    var last = [RetroFormat.ringSegmentStart(9), RetroFormat.ringSegmentEnd(9)];
+    logger.debug("0=" + first + " 3=" + wrap + " 9=" + last);
+    return first[0] == 87 && first[1] == 57
+        && wrap[0] == 339 && wrap[1] == 309
+        && last[0] == 123 && last[1] == 93;
+}

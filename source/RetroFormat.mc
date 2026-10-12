@@ -47,6 +47,16 @@ module RetroFormat {
         return (28 * percent + 50) / 100;
     }
 
+    // Step ring segment i (0..9), clockwise from 12 o'clock: 30 degree arcs with 6 degree gaps,
+    // in Dc.drawArc degrees (0 = 3 o'clock, counter-clockwise positive).
+    function ringSegmentStart(i as Number) as Number {
+        return (90 - i * 36 - 3 + 360) % 360;
+    }
+
+    function ringSegmentEnd(i as Number) as Number {
+        return (ringSegmentStart(i) - 30 + 360) % 360;
+    }
+
     // Filled segments (0..10) of the step-goal meter; 0 when steps or goal are unknown.
     function stepMeterSegments(steps, goal) as Number {
         if (steps == null || goal == null || goal <= 0) {
