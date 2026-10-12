@@ -12,6 +12,10 @@ import Toybox.Timer;
 const INTRO_MS = 1500;
 // Upper bound of the high-power window after a wake (the system uses about ten seconds).
 const AWAKE_MS = 10000;
+// Top of the cross (body and rays) relative to the screen center: the stat icons' top + 1.
+const CROSS_Y_OFFSET = 32;
+// Free memory required before allocating the full-screen intro layer.
+const LAYER_MIN_FREE_BYTES = 16384;
 
 class RetroInstinctView extends WatchUi.WatchFace {
 
@@ -35,6 +39,7 @@ class RetroInstinctView extends WatchUi.WatchFace {
     var awakeUntil;
     var introLayer;
     var introLayerReady;
+    var introLayerFailed;
 
     function initialize() {
         WatchFace.initialize();
@@ -46,6 +51,7 @@ class RetroInstinctView extends WatchUi.WatchFace {
         hrFallbackMinute = -1;
         awakeUntil = 0;
         introLayerReady = false;
+        introLayerFailed = false;
         phoneOffIcon = [0x1FE, 0x3FF, 0x303, 0x34B, 0x333, 0x333, 0x34B, 0x303, 0x303, 0x3FF, 0x3CF, 0x1FE]; // 10x12
     }
 
@@ -91,6 +97,7 @@ class RetroInstinctView extends WatchUi.WatchFace {
         awakeUntil = 0;
         stopAnimation();
         introStart = null;
+        introLayer = null;
         WatchUi.requestUpdate();
     }
 
@@ -108,6 +115,7 @@ class RetroInstinctView extends WatchUi.WatchFace {
         introStart = System.getTimer();
         awakeUntil = introStart + AWAKE_MS;
         introLayerReady = false;
+        introLayerFailed = false;
         if (animTimer == null) {
             animTimer = new Timer.Timer();
         }
@@ -158,7 +166,7 @@ class RetroInstinctView extends WatchUi.WatchFace {
         var activityInfo = ActivityMonitor.getInfo();
         var ringSegments = RetroFormat.stepMeterSegments(activityInfo.steps, activityInfo.stepGoal);
         drawStepRing(dc, dateX, dateY, ringRadius, RetroFormat.animatedCount(ringSegments, progress), RetroFormat.animatedCount(10, progress));
-        drawCrossRays(dc, centerX - 15, centerY + 32, RetroFormat.rayScale(progress, System.getTimer(), awakeUntil, System.getClockTime().sec));
+        drawCrossRays(dc, centerX - 15, centerY + CROSS_Y_OFFSET, RetroFormat.rayScale(progress, System.getTimer(), awakeUntil, System.getClockTime().sec));
     }
 
     // Static face for the intro, rendered once per intro into an opaque layer that uses the device
@@ -166,11 +174,22 @@ class RetroInstinctView extends WatchUi.WatchFace {
     // layer is not available, so the caller falls back to a full render.
     private function getIntroLayer(w as Number, h as Number) {
         if (introLayer == null) {
-            var options = {:width => w, :height => h};
-            if (Graphics has :createBufferedBitmap) {
-                introLayer = Graphics.createBufferedBitmap(options);
-            } else {
-                introLayer = new Graphics.BufferedBitmap(options);
+            // Without enough free memory, or if the allocation fails, keep the full render for this
+            // intro: the animation is less smooth but the face never crashes.
+            if (introLayerFailed || System.getSystemStats().freeMemory < LAYER_MIN_FREE_BYTES) {
+                return null;
+            }
+            try {
+                var options = {:width => w, :height => h};
+                if (Graphics has :createBufferedBitmap) {
+                    introLayer = Graphics.createBufferedBitmap(options);
+                } else {
+                    introLayer = new Graphics.BufferedBitmap(options);
+                }
+            } catch (ex) {
+                introLayer = null;
+                introLayerFailed = true;
+                return null;
             }
             introLayerReady = false;
         }
@@ -255,7 +274,7 @@ class RetroInstinctView extends WatchUi.WatchFace {
         dc.drawBitmap(centerX + spacing - 16, iconTop, heartIcon);
 
         // 3. Radiant cross body between the two columns (31x30); its rays are animated in onUpdate.
-        dc.drawBitmap(centerX - 15, iconTop + 1, crossIcon);
+        dc.drawBitmap(centerX - 15, centerY + CROSS_Y_OFFSET, crossIcon);
 
         // Phone-disconnected icon in the empty band right of the heart
         if (!settings.phoneConnected) {
