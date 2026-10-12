@@ -51,12 +51,12 @@ Out of scope: new device targets, user settings/properties, localization, changi
 | T2 | `chore`: rename app `testwatch` -> `Retro Instinct` (string, App class/file, manifest entry; UUID unchanged) | inline (mechanical) | [x] 32f1d83 (assess: medium, under_budget) |
 | T3 | `perf`: procedural battery (drop 8 SVGs), constant day names, remove `layout.xml`, `bolt.png`, `footprint.png`, `SensorHistory` import + permission | inline (1 non-trivial file + deletions) | [x] e48f097 (assess: medium, under_budget) |
 | T4 | `style`: date anchored to `WatchUi.getSubscreen()`, named layout constants without padding compensation | inline (1 non-trivial file) | [x] cc74857 (assess: medium, slice_budget_reached -> review granted, approved, acknowledged) |
-| T5 | `feat`: segmented step-goal progress bar | inline (1 non-trivial file) | [ ] |
-| T6 | `feat`: charging bolt indicator (1-bit pixel art drawn with primitives, no SVG) | inline (1 non-trivial file) | [ ] |
-| T7 | `feat`: phone-disconnected indicator (1-bit pixel art drawn with primitives, no SVG) | inline (1 non-trivial file) | [ ] |
-| T9 | `test`: extract pure formatters (steps, hour, battery fill) into a module and add `(:test)` unit tests the user can run with the SDK | inline (moved code is mechanical; the test file is the only new non-trivial file) | [ ] |
-| T10 | `perf`: cache the heart-rate history fallback per minute (live HR stays per update) | inline (1 small edit) | [ ] |
-| T8 | `docs`: README features and build notes | inline (passive doc) | [ ] |
+| T5 | `feat`: segmented step-goal progress bar | inline (1 non-trivial file) | [x] 80d2044 (assess: medium, under_budget) |
+| T6 | `feat`: charging bolt indicator (1-bit pixel art drawn with primitives, no SVG) | inline (1 non-trivial file) | [x] 1a67cec (assess: medium, under_budget) |
+| T7 | `feat`: phone-disconnected indicator (1-bit pixel art drawn with primitives, no SVG) | inline (1 non-trivial file) | [x] 49af187 (assess: medium, under_budget) |
+| T9 | `test`: extract pure formatters (steps, hour, battery fill) into a module and add `(:test)` unit tests the user can run with the SDK | inline (moved code is mechanical; the test file is the only new non-trivial file) | [x] a204dc1 compiler-warning fixes + 295e270 tests (assess: medium, under_budget) |
+| T10 | `perf`: cache the heart-rate history fallback per minute (live HR stays per update) | inline (1 small edit) | [x] d77e4aa (assess: medium, under_budget) |
+| T8 | `docs`: README features and build notes | inline (passive doc) | [x] docs commit that also closes this document (assess pending at commit time) |
 
 ## Acceptance criteria
 
@@ -89,6 +89,12 @@ Out of scope: new device targets, user settings/properties, localization, changi
 
 - Review `review-8cb40be8abca118c` (lens: reliability) over `ad09682..cc74857`: **approved**, acknowledged, authority burned. Reviewed boundary is now `cc74857`. Advisory, non-blocking findings: `R3-untested-formatters` (WARNING) -> accepted as T9; `R3-hr-query-unthrottled` (SUGGESTION) -> accepted as T10 (live HR was already read first; only the fallback runs per update); `R3-task-status-drift` (SUGGESTION) -> fixed in this document.
 
+- T5-T7: bitmasks cross-checked against the mocked pixel art (`bolt match: True`, `phone match: True`); positions match the mock (bolt `clusterX + 26`, phone `clusterX - 36`, meter `centerX - spacing - 22`).
+- SDK verification (T9 onward, covering all earlier tasks): `monkeyc -d instinct2` -> BUILD SUCCESSFUL. The first build showed 2 warnings (24x24 launcher icon on a 62x62 device; untyped `dayNames` container access); both were fixed in `a204dc1`, and later builds have 0 warnings. `monkeyc -t` -> BUILD SUCCESSFUL; `monkeydo ... instinct2 -t` -> **PASSED (passed=9, failed=0, errors=0)**.
+- Mutation check (RED): reintroducing the original `(steps / 1000).format("%.1f")` in a scratch copy made `formatStepsTruncatesToTenthsFrom10K` FAIL with `12345=12.0K` (8 passed, 1 failed). The real code passes (GREEN).
+- Simulator run of the release build: loaded on instinct2 with an empty runtime log (no exceptions). No screenshot was taken because the terminal has no screen-recording permission.
+- Out-of-scope follow-ups: refresh `preview.png` with a new simulator screenshot; on-device check on a real Instinct 2.
+
 ## Next step
 
-T5.
+Feature complete on `feat/retro-face-improvements`. Push and the single PR are the user's decision.
