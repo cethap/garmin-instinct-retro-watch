@@ -80,7 +80,7 @@ class RetroInstinctView extends WatchUi.WatchFace {
 
         // --- TIME (Center, Large) ---
         var timeStr = Lang.format("$1$:$2$", [RetroFormat.formatHour(clock.hour, settings.is24Hour), clock.min.format("%02d")]);
-        dc.drawText(centerX, centerY+10, fontBig, timeStr, Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+        dc.drawText(centerX, centerY + 12, fontBig, timeStr, Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
 
         // --- DATE (Subscreen, Small) ---
         var info = Gregorian.info(now, Time.FORMAT_SHORT);
@@ -91,24 +91,24 @@ class RetroInstinctView extends WatchUi.WatchFace {
         drawStepRing(dc, dateX, dateY, ringRadius, RetroFormat.stepMeterSegments(activityInfo.steps, activityInfo.stepGoal));
 
         // --- TOP AREA (left of the subscreen) ---
-        // Three bands that follow the round display: a short status row where the top is narrow,
-        // the logo where it is widest, and a data row above the time.
+        // Three bands that follow the round display: a status row where the top is narrow, the logo
+        // where it is widest, and a data row above the time. Both rows are left-aligned at the start
+        // of the fish body, so they line up with the logo whatever the width of their values.
+        var rowX = centerX - 64;
         var charging = (sysStats has :charging) && sysStats.charging;
-        drawStatusRow(dc, centerX - 21, 4, RetroFormat.batteryPercent(sysStats.battery), charging);
-        dc.drawBitmap(centerX - 78, 18, yeshuaLogo); // 88x36
-        var calStr = RetroFormat.formatCalories(activityInfo.calories);
-        var calLeft = centerX - 32 - (14 + dc.getTextWidthInPixels(calStr, fontSmall)) / 2;
-        drawPixelArt(dc, calLeft, 58, flameIcon, 10);
-        dc.drawText(calLeft + 14, 58, fontSmall, calStr, Graphics.TEXT_JUSTIFY_LEFT);
+        drawStatusRow(dc, rowX, 10, RetroFormat.batteryPercent(sysStats.battery), charging);
+        dc.drawBitmap(centerX - 81, 24, yeshuaLogo); // 96x39
+        drawPixelArt(dc, rowX, 65, flameIcon, 10);
+        dc.drawText(rowX + 14, 65, fontSmall, RetroFormat.formatCalories(activityInfo.calories), Graphics.TEXT_JUSTIFY_LEFT);
         if (!settings.phoneConnected) {
-            drawPixelArt(dc, centerX + 10, 58, phoneOffIcon, 10); // right end of the data row
+            drawPixelArt(dc, centerX + 16, 65, phoneOffIcon, 10); // right end of the data row
         }
 
         // --- STATS ROW (Bottom) ---
         // Layout: Steps (Left) | HR (Right), 32x32 icons above their values
 
-        var iconTop = centerY + 29;
-        var textY = centerY + 70;
+        var iconTop = centerY + 31;
+        var textY = centerY + 72;
         var spacing = 28; // Column offset from center; keeps "12.3K" clear of the HR value
 
         // 1. STEPS (Left)
@@ -124,15 +124,13 @@ class RetroInstinctView extends WatchUi.WatchFace {
         dc.drawText(centerX + spacing, textY, fontSmall, getHeartRate(now.value() / 60), Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
     }
 
-    // Status row centered on x: mini battery, then the percentage; a bolt replaces "%" while charging.
+    // Status row starting at x: mini battery, then the percentage; a bolt replaces "%" while charging.
     private function drawStatusRow(dc as Dc, x as Number, y as Number, percent as Number, charging as Boolean) as Void {
         var label = charging ? percent.format("%d") : percent.format("%d") + "%";
-        var labelWidth = dc.getTextWidthInPixels(label, fontSmall);
-        var left = x - (28 + labelWidth + (charging ? 10 : 0)) / 2;
-        drawMiniBattery(dc, left, y, percent);
-        dc.drawText(left + 28, y, fontSmall, label, Graphics.TEXT_JUSTIFY_LEFT);
+        drawMiniBattery(dc, x, y, percent);
+        dc.drawText(x + 28, y, fontSmall, label, Graphics.TEXT_JUSTIFY_LEFT);
         if (charging) {
-            drawPixelArt(dc, left + 30 + labelWidth, y, boltIcon, 8);
+            drawPixelArt(dc, x + 30 + dc.getTextWidthInPixels(label, fontSmall), y, boltIcon, 8);
         }
     }
 

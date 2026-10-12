@@ -64,6 +64,7 @@ Out of scope: new device targets, user settings/properties, localization, changi
 | T16 | `style`: minimal pixel fixes on the original Yeshua SVG (user request: keep the original, but improve it) | inline (1 asset) | [x] approved by the user after the simulator preview ("quedó mejor"), 32 px changed |
 | T17 | `style`: logo as hero (88x36, viewBox margin so the belly is not clipped, pixel fixes redone for the size), mini battery status row (bolt replaces `%` while charging, battery days dropped), phone icon moved to a data row (user request) | inline (view + helper/test + asset) | [x] 322c3dd (RED arity error -> GREEN 10/10) |
 | T18 | `feat`: calories data row with a pixel-art flame (user picked calories over notifications, altitude and Body Battery) | inline (view + helper/test) | [x] f7a4fd9 (RED undefined symbol -> GREEN 11/11) |
+| T19 | `style`: rebalance the top area after seeing it in the simulator (user request: the battery row hugged the subscreen, the logo could be larger, the calories row left too much empty space). Logo at 96x39 (3 px/unit) with pixel fixes redone; status and calories rows left-aligned at the start of the fish body (x=24); time and bottom row moved down 2px | inline (view + asset) | [x] layout commit (0 warnings, 11/11; mock: zero clipped pixels at 50%/0 kcal, charging + phone-off + 12345 kcal, and 100%/1850 kcal) |
 | T8 | `docs`: README features and build notes | inline (passive doc) | [x] docs commit that also closes this document (assess pending at commit time) |
 
 ## Acceptance criteria
