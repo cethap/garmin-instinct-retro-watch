@@ -38,7 +38,9 @@ Out of scope: new device targets, user settings/properties, localization, changi
 ## Delivery
 
 - Strategy: `ask-on-risk` (default). Forecast: ~300 authored changed lines (under the ~400 budget) -> single branch/PR.
+- User decision when the budget was exceeded: **single PR** (`single-pr`), no chained PRs.
 - Push and PR creation remain the user's decision.
+- RDD: the user gave standing consent ("RDD granted hasta que el riesgo sea bajo"): medium/high consent envelopes run the `granted` invocation and are reported.
 - Base (first reviewed boundary): `ad09682`.
 
 ## Tasks
@@ -48,10 +50,12 @@ Out of scope: new device targets, user settings/properties, localization, changi
 | T1 | `fix`: steps float division and >=100K, null-safe steps, live HR via `Activity.getActivityInfo()` with history fallback and `--` reset, 12/24h support | inline (1 non-trivial file, full context already held) | [x] c108f02 (assess: medium, under_budget) |
 | T2 | `chore`: rename app `testwatch` -> `Retro Instinct` (string, App class/file, manifest entry; UUID unchanged) | inline (mechanical) | [x] 32f1d83 (assess: medium, under_budget) |
 | T3 | `perf`: procedural battery (drop 8 SVGs), constant day names, remove `layout.xml`, `bolt.png`, `footprint.png`, `SensorHistory` import + permission | inline (1 non-trivial file + deletions) | [x] e48f097 (assess: medium, under_budget) |
-| T4 | `style`: date anchored to `WatchUi.getSubscreen()`, named layout constants without padding compensation | inline (1 non-trivial file) | [ ] |
+| T4 | `style`: date anchored to `WatchUi.getSubscreen()`, named layout constants without padding compensation | inline (1 non-trivial file) | [x] cc74857 (assess: medium, slice_budget_reached -> review granted, approved, acknowledged) |
 | T5 | `feat`: segmented step-goal progress bar | inline (1 non-trivial file) | [ ] |
-| T6 | `feat`: charging bolt indicator | inline (1 non-trivial file + 1 small SVG) | [ ] |
-| T7 | `feat`: phone-disconnected indicator | inline (1 non-trivial file + 1 small SVG) | [ ] |
+| T6 | `feat`: charging bolt indicator (1-bit pixel art drawn with primitives, no SVG) | inline (1 non-trivial file) | [ ] |
+| T7 | `feat`: phone-disconnected indicator (1-bit pixel art drawn with primitives, no SVG) | inline (1 non-trivial file) | [ ] |
+| T9 | `test`: extract pure formatters (steps, hour, battery fill) into a module and add `(:test)` unit tests the user can run with the SDK | inline (moved code is mechanical; the test file is the only new non-trivial file) | [ ] |
+| T10 | `perf`: cache the heart-rate history fallback per minute (live HR stays per update) | inline (1 small edit) | [ ] |
 | T8 | `docs`: README features and build notes | inline (passive doc) | [ ] |
 
 ## Acceptance criteria
@@ -83,6 +87,8 @@ Out of scope: new device targets, user settings/properties, localization, changi
 - 12h mode shows no AM/PM marker: the time already spans up to 166 of 176 px and the subscreen has no room for a third line without crowding.
 - Running count after T3: 395 changed lines (includes ~80 lines of deleted battery SVGs) -> delivery budget reached; chain strategy asked once (ask-on-risk).
 
+- Review `review-8cb40be8abca118c` (lens: reliability) over `ad09682..cc74857`: **approved**, acknowledged, authority burned. Reviewed boundary is now `cc74857`. Advisory, non-blocking findings: `R3-untested-formatters` (WARNING) -> accepted as T9; `R3-hr-query-unthrottled` (SUGGESTION) -> accepted as T10 (live HR was already read first; only the fallback runs per update); `R3-task-status-drift` (SUGGESTION) -> fixed in this document.
+
 ## Next step
 
-T4.
+T5.

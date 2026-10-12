@@ -103,8 +103,9 @@ class RetroInstinctView extends WatchUi.WatchFace {
         // 1. STEPS (Left)
         var stepStr = formatSteps(activityInfo.steps);
 
-        // Draw Footprint Icon
+        // Draw Footprint Icon and the step-goal meter on its left
         dc.drawBitmap(centerX - spacing - 16, iconTop, footprintIcon);
+        drawStepMeter(dc, centerX - spacing - 22, iconTop + 31, activityInfo.steps, activityInfo.stepGoal);
         dc.drawText(centerX - spacing, textY, fontSmall, stepStr, Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
 
         // 2. HEART RATE (Right)
@@ -125,6 +126,26 @@ class RetroInstinctView extends WatchUi.WatchFace {
         var fill = (28 * percent + 50) / 100;
         if (fill > 0) {
             dc.fillRectangle(x + 6, y + 6, fill, 12);
+        }
+    }
+
+    // Retro 10-segment meter filled bottom-up toward the daily step goal.
+    // Segments are 4x2 px with a 1px gap; empty ones keep a 2x1 dot so the scale stays visible.
+    private function drawStepMeter(dc as Dc, x as Number, bottom as Number, steps, goal) as Void {
+        var filled = 0;
+        if (steps != null && goal != null && goal > 0) {
+            filled = steps * 10 / goal;
+            if (filled > 10) {
+                filled = 10;
+            }
+        }
+        for (var i = 0; i < 10; i++) {
+            var y = bottom - (i + 1) * 3 + 1;
+            if (i < filled) {
+                dc.fillRectangle(x, y, 4, 2);
+            } else {
+                dc.fillRectangle(x + 1, y + 1, 2, 1);
+            }
         }
     }
 
