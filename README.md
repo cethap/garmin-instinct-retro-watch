@@ -1,6 +1,6 @@
 # Garmin Instinct 2 Retro Watch Face
 
-A custom watch face for the Garmin Instinct 2, featuring a retro digital aesthetic.
+A custom watch face for the Garmin Instinct 2, featuring a retro pixel-art aesthetic.
 
 ## Preview
 
@@ -8,11 +8,17 @@ A custom watch face for the Garmin Instinct 2, featuring a retro digital aesthet
 
 ## Features
 
-- **Retro Digital Design**: Classic 7-segment display style.
-- **Battery Status**: prominent battery indicator with percentage and estimated days remaining.
-- **Health Metrics**: Displays steps and heart rate.
-- **Date & Time**: Clear day, date, and time display.
-- **Yeshua Fish Icon**: Custom decorative element.
+- **Retro Pixel Design**: chunky bitmap fonts and 1-bit pixel-art icons.
+- **Time**: large digits with a leading zero that follow the watch's 12/24-hour setting.
+- **Date**: day and date centered in the round subscreen.
+- **Battery**: compact status row with a pixel battery whose fill matches the exact charge and the percentage; a bolt replaces the % sign while charging.
+- **Steps**: daily count (`12.3K` from 10,000 steps) and a 10-segment ring around the date that fills toward your step goal.
+- **Heart Rate**: live reading when available, otherwise the latest valid sample; `--` when the watch is off-wrist.
+- **Radiant Cross**: a pixel-art cross with light rays between the steps and heart-rate columns.
+- **Dithered Vignette**: a subtle retro dot gradient that fades in toward the round bottom edge.
+- **Wrist-Raise Intro**: on wrist raise the step ring draws itself and charges up, the dots rise from the bottom and the cross rays grow (about 1.5 s). The rays then pulse (full, half, off, half) while you look, and everything settles to a static face in low power.
+- **Phone Status**: a crossed-phone icon appears right of the heart rate when the phone is disconnected.
+- **Yeshua Fish Icon**: custom logo shown large at the top, with pixel fixes for the 1-bit display.
 
 ## Device Support
 
@@ -20,9 +26,20 @@ A custom watch face for the Garmin Instinct 2, featuring a retro digital aesthet
 
 ## Development
 
-This project is built using the Garmin Connect IQ SDK.
+This project is built using the Garmin Connect IQ SDK (API level 3.4.0 or later). The SDK tools need a Java 17+ runtime.
 
-### Build Requirements
+### Build
 
-- Garmin Connect IQ SDK (System 3)
-- Compatible Device (Instinct 2)
+```sh
+monkeyc -f monkey.jungle -d instinct2 -o bin/RetroInstinct.prg -y /path/to/developer_key
+```
+
+### Unit Tests
+
+The pure formatting logic in `source/RetroFormat.mc` is covered by Run No Evil tests in `source/RetroFormatTests.mc`. Tests are excluded from regular builds.
+
+```sh
+monkeyc -f monkey.jungle -d instinct2 -o bin/RetroInstinctTest.prg -y /path/to/developer_key -t
+connectiq &
+monkeydo bin/RetroInstinctTest.prg instinct2 -t
+```

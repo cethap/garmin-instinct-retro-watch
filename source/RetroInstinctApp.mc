@@ -2,7 +2,7 @@ import Toybox.Application;
 import Toybox.Lang;
 import Toybox.WatchUi;
 
-class testwatchApp extends Application.AppBase {
+class RetroInstinctApp extends Application.AppBase {
 
     function initialize() {
         AppBase.initialize();
@@ -23,6 +23,6 @@ class testwatchApp extends Application.AppBase {
 
 }
 
-function getApp() as testwatchApp {
-    return Application.getApp() as testwatchApp;
+function getApp() as RetroInstinctApp {
+    return Application.getApp() as RetroInstinctApp;
 }
