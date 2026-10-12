@@ -30,14 +30,6 @@ module RetroFormat {
         return steps.format("%d");
     }
 
-    // Daily calories as a whole number, or "--" when the device has no value.
-    function formatCalories(calories) as String {
-        if (calories == null) {
-            return "--";
-        }
-        return calories.format("%d");
-    }
-
     // Rounds SystemStats.battery to a whole percentage clamped to 0..100.
     function batteryPercent(battery as Float) as Number {
         var percent = (battery + 0.5).toNumber();

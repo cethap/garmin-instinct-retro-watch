@@ -20,7 +20,6 @@ class RetroInstinctView extends WatchUi.WatchFace {
     var ringRadius;
     var boltIcon;
     var phoneOffIcon;
-    var flameIcon;
     var hrFallback;
     var hrFallbackMinute;
 
@@ -33,7 +32,6 @@ class RetroInstinctView extends WatchUi.WatchFace {
         hrFallback = "--";
         hrFallbackMinute = -1;
         phoneOffIcon = [0x1FE, 0x3FF, 0x303, 0x34B, 0x333, 0x333, 0x34B, 0x303, 0x303, 0x3FF, 0x3CF, 0x1FE]; // 10x12
-        flameIcon = [0x010, 0x032, 0x0BA, 0x0BF, 0x1BF, 0x1DF, 0x18F, 0x307, 0x327, 0x377, 0x18E, 0x0FC]; // 10x12
     }
 
     // Load resources and resolve the date position once
@@ -91,18 +89,11 @@ class RetroInstinctView extends WatchUi.WatchFace {
         drawStepRing(dc, dateX, dateY, ringRadius, RetroFormat.stepMeterSegments(activityInfo.steps, activityInfo.stepGoal));
 
         // --- TOP AREA (left of the subscreen) ---
-        // Three bands that follow the round display: a status row where the top is narrow, the logo
-        // where it is widest, and a data row above the time. Both rows are left-aligned at the start
-        // of the fish body, so they line up with the logo whatever the width of their values.
-        var rowX = centerX - 64;
+        // A centered status row where the round display is narrow, then the logo filling the
+        // widest band down to the time (about 3px clear of the display edge).
         var charging = (sysStats has :charging) && sysStats.charging;
-        drawStatusRow(dc, rowX, 10, RetroFormat.batteryPercent(sysStats.battery), charging);
-        dc.drawBitmap(centerX - 81, 24, yeshuaLogo); // 96x39
-        drawPixelArt(dc, rowX, 65, flameIcon, 10);
-        dc.drawText(rowX + 14, 65, fontSmall, RetroFormat.formatCalories(activityInfo.calories), Graphics.TEXT_JUSTIFY_LEFT);
-        if (!settings.phoneConnected) {
-            drawPixelArt(dc, centerX + 16, 65, phoneOffIcon, 10); // right end of the data row
-        }
+        drawStatusRow(dc, centerX - 26, 10, RetroFormat.batteryPercent(sysStats.battery), charging);
+        dc.drawBitmap(centerX - 90, 29, yeshuaLogo); // 112x46
 
         // --- STATS ROW (Bottom) ---
         // Layout: Steps (Left) | HR (Right), 32x32 icons above their values
@@ -121,16 +112,23 @@ class RetroInstinctView extends WatchUi.WatchFace {
         // 2. HEART RATE (Right)
         // Draw Heart Icon
         dc.drawBitmap(centerX + spacing - 16, iconTop, heartIcon);
+
+        // Phone-disconnected icon in the gap between the two stat icons
+        if (!settings.phoneConnected) {
+            drawPixelArt(dc, centerX - 5, iconTop + 10, phoneOffIcon, 10);
+        }
         dc.drawText(centerX + spacing, textY, fontSmall, getHeartRate(now.value() / 60), Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
     }
 
-    // Status row starting at x: mini battery, then the percentage; a bolt replaces "%" while charging.
+    // Status row centered on x: mini battery, then the percentage; a bolt replaces "%" while charging.
     private function drawStatusRow(dc as Dc, x as Number, y as Number, percent as Number, charging as Boolean) as Void {
         var label = charging ? percent.format("%d") : percent.format("%d") + "%";
-        drawMiniBattery(dc, x, y, percent);
-        dc.drawText(x + 28, y, fontSmall, label, Graphics.TEXT_JUSTIFY_LEFT);
+        var labelWidth = dc.getTextWidthInPixels(label, fontSmall);
+        var left = x - (28 + labelWidth + (charging ? 10 : 0)) / 2;
+        drawMiniBattery(dc, left, y, percent);
+        dc.drawText(left + 28, y, fontSmall, label, Graphics.TEXT_JUSTIFY_LEFT);
         if (charging) {
-            drawPixelArt(dc, x + 30 + dc.getTextWidthInPixels(label, fontSmall), y, boltIcon, 8);
+            drawPixelArt(dc, left + 30 + labelWidth, y, boltIcon, 8);
         }
     }
 

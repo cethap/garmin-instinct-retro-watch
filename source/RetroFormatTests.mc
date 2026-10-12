@@ -99,12 +99,3 @@ function stepRingSegmentsStartAtNoonClockwise(logger as Logger) as Boolean {
         && wrap[0] == 339 && wrap[1] == 309
         && last[0] == 123 && last[1] == 93;
 }
-
-(:test)
-function formatCaloriesHandlesNullAndCounts(logger as Logger) as Boolean {
-    var unknown = RetroFormat.formatCalories(null);
-    var zero = RetroFormat.formatCalories(0);
-    var day = RetroFormat.formatCalories(1850);
-    logger.debug("null=" + unknown + " 0=" + zero + " 1850=" + day);
-    return unknown.equals("--") && zero.equals("0") && day.equals("1850");
-}
