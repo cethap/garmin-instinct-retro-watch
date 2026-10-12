@@ -42,9 +42,9 @@ module RetroFormat {
         return percent;
     }
 
-    // Width of the 28 px battery fill for a 0..100 percentage, rounded to the nearest pixel.
-    function batteryFillWidth(percent as Number) as Number {
-        return (28 * percent + 50) / 100;
+    // Width of a battery fill of maxWidth px for a 0..100 percentage, rounded to the nearest pixel.
+    function batteryFillWidth(percent as Number, maxWidth as Number) as Number {
+        return (maxWidth * percent + 50) / 100;
     }
 
     // Step ring segment i (0..9), clockwise from 12 o'clock: 30 degree arcs with 6 degree gaps,

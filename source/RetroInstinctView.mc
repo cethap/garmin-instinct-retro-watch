@@ -88,26 +88,15 @@ class RetroInstinctView extends WatchUi.WatchFace {
         dc.drawText(dateX + 1, dateY - 11, fontSmall, dateStr, Graphics.TEXT_JUSTIFY_CENTER);
         drawStepRing(dc, dateX, dateY, ringRadius, RetroFormat.stepMeterSegments(activityInfo.steps, activityInfo.stepGoal));
 
-        // --- BATTERY (Top Center, Pixel Icon) ---
-        var batPct = RetroFormat.batteryPercent(sysStats.battery);
-        var batStr = batPct.format("%d") + "%";
-
-        if (sysStats has :batteryInDays && sysStats.batteryInDays != null) {
-            batStr += " " + sysStats.batteryInDays.format("%d") + "d";
-        }
-
-        // Logo, battery and battery text share one column left of the subscreen.
-        // Every element is trimmed to its content, so these are real positions.
-        var clusterX = centerX - 23;
-        dc.drawBitmap(clusterX - 32, 5, yeshuaLogo); // 64x24
-        drawBattery(dc, clusterX - 22, 33, batPct); // 44x24 including the terminal
-        if (sysStats has :charging && sysStats.charging) {
-            drawPixelArt(dc, clusterX + 26, 39, boltIcon, 8); // right of the terminal
-        }
+        // --- TOP AREA (left of the subscreen) ---
+        // Three bands that follow the round display: a short status row where the top is narrow,
+        // the logo where it is widest, and a data row above the time.
+        var charging = (sysStats has :charging) && sysStats.charging;
+        drawStatusRow(dc, centerX - 21, 4, RetroFormat.batteryPercent(sysStats.battery), charging);
+        dc.drawBitmap(centerX - 78, 18, yeshuaLogo); // 88x36
         if (!settings.phoneConnected) {
-            drawPixelArt(dc, clusterX - 36, 39, phoneOffIcon, 10); // left of the battery
+            drawPixelArt(dc, centerX + 8, 58, phoneOffIcon, 10); // right end of the data row
         }
-        dc.drawText(clusterX, 68, fontSmall, batStr, Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
 
         // --- STATS ROW (Bottom) ---
         // Layout: Steps (Left) | HR (Right), 32x32 icons above their values
@@ -129,18 +118,30 @@ class RetroInstinctView extends WatchUi.WatchFace {
         dc.drawText(centerX + spacing, textY, fontSmall, getHeartRate(now.value() / 60), Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
     }
 
-    // Pixel battery: 40x24 body with a 4px border, 28x12 proportional fill and a 4x12 terminal.
+    // Status row centered on x: mini battery, then the percentage; a bolt replaces "%" while charging.
+    private function drawStatusRow(dc as Dc, x as Number, y as Number, percent as Number, charging as Boolean) as Void {
+        var label = charging ? percent.format("%d") : percent.format("%d") + "%";
+        var labelWidth = dc.getTextWidthInPixels(label, fontSmall);
+        var left = x - (28 + labelWidth + (charging ? 10 : 0)) / 2;
+        drawMiniBattery(dc, left, y, percent);
+        dc.drawText(left + 28, y, fontSmall, label, Graphics.TEXT_JUSTIFY_LEFT);
+        if (charging) {
+            drawPixelArt(dc, left + 30 + labelWidth, y, boltIcon, 8);
+        }
+    }
+
+    // 24x12 pixel battery: 22x12 body with a 2px border, 16x6 proportional fill and a 2x6 terminal.
     // Drawn with primitives so no battery bitmaps stay loaded in memory.
-    private function drawBattery(dc as Dc, x as Number, y as Number, percent as Number) as Void {
+    private function drawMiniBattery(dc as Dc, x as Number, y as Number, percent as Number) as Void {
         dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
-        dc.fillRectangle(x, y, 40, 24);
-        dc.fillRectangle(x + 40, y + 6, 4, 12);
+        dc.fillRectangle(x, y, 22, 12);
+        dc.fillRectangle(x + 22, y + 3, 2, 6);
         dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_TRANSPARENT);
-        dc.fillRectangle(x + 4, y + 4, 32, 16);
+        dc.fillRectangle(x + 2, y + 2, 18, 8);
         dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
-        var fill = RetroFormat.batteryFillWidth(percent);
+        var fill = RetroFormat.batteryFillWidth(percent, 16);
         if (fill > 0) {
-            dc.fillRectangle(x + 6, y + 6, fill, 12);
+            dc.fillRectangle(x + 3, y + 3, fill, 6);
         }
     }
 

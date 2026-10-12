@@ -61,13 +61,13 @@ function batteryPercentRoundsAndClamps(logger as Logger) as Boolean {
 }
 
 (:test)
-function batteryFillWidthScalesTo28px(logger as Logger) as Boolean {
-    var empty = RetroFormat.batteryFillWidth(0);
-    var low = RetroFormat.batteryFillWidth(2);
-    var half = RetroFormat.batteryFillWidth(50);
-    var full = RetroFormat.batteryFillWidth(100);
-    logger.debug("0=" + empty + " 2=" + low + " 50=" + half + " 100=" + full);
-    return empty == 0 && low == 1 && half == 14 && full == 28;
+function batteryFillWidthScalesToMaxWidth(logger as Logger) as Boolean {
+    var empty = RetroFormat.batteryFillWidth(0, 16);
+    var low = RetroFormat.batteryFillWidth(4, 16);
+    var half = RetroFormat.batteryFillWidth(50, 16);
+    var full = RetroFormat.batteryFillWidth(100, 16);
+    logger.debug("0=" + empty + " 4=" + low + " 50=" + half + " 100=" + full);
+    return empty == 0 && low == 1 && half == 8 && full == 16;
 }
 
 (:test)
