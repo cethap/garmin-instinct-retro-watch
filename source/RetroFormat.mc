@@ -3,16 +3,15 @@ import Toybox.Lang;
 // Pure, device-independent helpers used by RetroInstinctView and its unit tests.
 module RetroFormat {
 
-    // Honors the device 12/24h setting; 12h hours have no leading zero.
+    // Honors the device 12/24h setting; both modes keep the leading zero (08:16).
     function formatHour(hour as Number, is24Hour as Boolean) as String {
-        if (is24Hour) {
-            return hour.format("%02d");
+        if (!is24Hour) {
+            hour = hour % 12;
+            if (hour == 0) {
+                hour = 12;
+            }
         }
-        hour = hour % 12;
-        if (hour == 0) {
-            hour = 12;
-        }
-        return hour.format("%d");
+        return hour.format("%02d");
     }
 
     // 9876 -> "9876", 12345 -> "12.3K", 123456 -> "123K", null -> "--".

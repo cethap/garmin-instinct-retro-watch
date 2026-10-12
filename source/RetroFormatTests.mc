@@ -40,13 +40,14 @@ function formatHourKeepsLeadingZeroIn24h(logger as Logger) as Boolean {
 }
 
 (:test)
-function formatHourWrapsTo12In12h(logger as Logger) as Boolean {
+function formatHourWrapsTo12WithLeadingZeroIn12h(logger as Logger) as Boolean {
     var midnight = RetroFormat.formatHour(0, false);
+    var morning = RetroFormat.formatHour(8, false);
     var noon = RetroFormat.formatHour(12, false);
     var afternoon = RetroFormat.formatHour(13, false);
     var night = RetroFormat.formatHour(23, false);
-    logger.debug("0=" + midnight + " 12=" + noon + " 13=" + afternoon + " 23=" + night);
-    return midnight.equals("12") && noon.equals("12") && afternoon.equals("1") && night.equals("11");
+    logger.debug("0=" + midnight + " 8=" + morning + " 12=" + noon + " 13=" + afternoon + " 23=" + night);
+    return midnight.equals("12") && morning.equals("08") && noon.equals("12") && afternoon.equals("01") && night.equals("11");
 }
 
 (:test)
