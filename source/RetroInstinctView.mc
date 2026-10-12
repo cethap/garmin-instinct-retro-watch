@@ -33,6 +33,8 @@ class RetroInstinctView extends WatchUi.WatchFace {
     var animTimer;
     var introStart;
     var awakeUntil;
+    var introLayer;
+    var introLayerReady;
 
     function initialize() {
         WatchFace.initialize();
@@ -43,6 +45,7 @@ class RetroInstinctView extends WatchUi.WatchFace {
         hrFallback = "--";
         hrFallbackMinute = -1;
         awakeUntil = 0;
+        introLayerReady = false;
         phoneOffIcon = [0x1FE, 0x3FF, 0x303, 0x34B, 0x333, 0x333, 0x34B, 0x303, 0x303, 0x3FF, 0x3CF, 0x1FE]; // 10x12
     }
 
@@ -91,10 +94,11 @@ class RetroInstinctView extends WatchUi.WatchFace {
         WatchUi.requestUpdate();
     }
 
-    // Timer callback: redraw until the intro is over, then stop the timer.
+    // Timer callback: redraw until the intro is over, then stop the timer and free the intro layer.
     function onAnimationTick() as Void {
         if (introStart == null || System.getTimer() - introStart >= INTRO_MS) {
             stopAnimation();
+            introLayer = null;
         }
         WatchUi.requestUpdate();
     }
@@ -103,10 +107,11 @@ class RetroInstinctView extends WatchUi.WatchFace {
         stopAnimation();
         introStart = System.getTimer();
         awakeUntil = introStart + AWAKE_MS;
+        introLayerReady = false;
         if (animTimer == null) {
             animTimer = new Timer.Timer();
         }
-        animTimer.start(method(:onAnimationTick), 80, true);
+        animTimer.start(method(:onAnimationTick), 50, true);
     }
 
     private function stopAnimation() as Void {
@@ -127,22 +132,84 @@ class RetroInstinctView extends WatchUi.WatchFace {
             progress = RetroFormat.introProgress(System.getTimer() - introStart, INTRO_MS);
         }
 
-        // 1. CLEAR BACKGROUND
-        dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
-        dc.clear();
-
-        // 2. SET DRAW COLOR
+        // During the intro the static face comes from a layer rendered once, so each frame only
+        // redraws the animated parts. A full render per frame is too slow on the device.
+        var layer = null;
+        if (progress < 1.0) {
+            layer = getIntroLayer(w, h);
+        }
+        if (layer != null) {
+            dc.drawBitmap(0, 0, layer);
+        } else {
+            dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
+            dc.clear();
+            dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
+            // The vignette goes under the face so the outlined values stay on top of its dots.
+            drawVignette(dc, w, centerY, progress);
+            drawStaticFace(dc);
+        }
         dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
+        if (layer != null) {
+            drawVignette(dc, w, centerY, progress);
+        }
 
-        // Dithered vignette that fades in toward the round bottom edge (176x60, precomputed so it
-        // costs one drawBitmap). The stat values are outlined so they stay readable over it.
-        // During the intro it is revealed from the bottom up.
-        var vignetteRows = RetroFormat.animatedCount(60, progress);
-        if (vignetteRows > 0) {
-            dc.setClip(0, centerY + 88 - vignetteRows, w, vignetteRows);
+        // Animated parts: the step ring draws itself and charges up to the real progress, and the
+        // cross rays grow, then pulse (full, half, off, half) while the watch is awake.
+        var activityInfo = ActivityMonitor.getInfo();
+        var ringSegments = RetroFormat.stepMeterSegments(activityInfo.steps, activityInfo.stepGoal);
+        drawStepRing(dc, dateX, dateY, ringRadius, RetroFormat.animatedCount(ringSegments, progress), RetroFormat.animatedCount(10, progress));
+        drawCrossRays(dc, centerX - 15, centerY + 32, RetroFormat.rayScale(progress, System.getTimer(), awakeUntil, System.getClockTime().sec));
+    }
+
+    // Static face for the intro, rendered once per intro into an opaque layer that uses the device
+    // palette (a smaller palette rejects the transparent bitmaps drawn into it). Returns null when the
+    // layer is not available, so the caller falls back to a full render.
+    private function getIntroLayer(w as Number, h as Number) {
+        if (introLayer == null) {
+            var options = {:width => w, :height => h};
+            if (Graphics has :createBufferedBitmap) {
+                introLayer = Graphics.createBufferedBitmap(options);
+            } else {
+                introLayer = new Graphics.BufferedBitmap(options);
+            }
+            introLayerReady = false;
+        }
+        var bitmap = introLayer;
+        if (bitmap has :get) {
+            bitmap = bitmap.get(); // API 4+ returns a reference the system may purge
+        }
+        if (bitmap == null) {
+            introLayer = null;
+            return null;
+        }
+        if (!introLayerReady) {
+            var layerDc = bitmap.getDc();
+            layerDc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
+            layerDc.clear();
+            layerDc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
+            drawStaticFace(layerDc);
+            introLayerReady = true;
+        }
+        return bitmap;
+    }
+
+    // Dithered vignette that fades in toward the round bottom edge (176x60, precomputed so it
+    // costs one drawBitmap). During the intro it is revealed from the bottom up.
+    private function drawVignette(dc as Dc, w as Number, centerY as Number, progress as Float) as Void {
+        var rows = RetroFormat.animatedCount(60, progress);
+        if (rows > 0) {
+            dc.setClip(0, centerY + 88 - rows, w, rows);
             dc.drawBitmap(0, centerY + 28, vignette);
             dc.clearClip();
         }
+    }
+
+    // Everything that does not animate: time, date, status row, logo, stats, cross body, phone icon.
+    private function drawStaticFace(dc as Dc) as Void {
+        var w = dc.getWidth();
+        var h = dc.getHeight();
+        var centerX = w / 2;
+        var centerY = h / 2;
 
         // --- DATA FETCHING ---
         var activityInfo = ActivityMonitor.getInfo();
@@ -161,9 +228,6 @@ class RetroInstinctView extends WatchUi.WatchFace {
         // Center the ink, not the text box, inside the ring: each glyph leaves one empty column
         // on its right, and the two lines are 23px of ink (12px line + 11px glyph).
         dc.drawText(dateX + 1, dateY - 11, fontSmall, dateStr, Graphics.TEXT_JUSTIFY_CENTER);
-        // During the intro the ring draws itself segment by segment and charges up to the real progress.
-        var ringSegments = RetroFormat.stepMeterSegments(activityInfo.steps, activityInfo.stepGoal);
-        drawStepRing(dc, dateX, dateY, ringRadius, RetroFormat.animatedCount(ringSegments, progress), RetroFormat.animatedCount(10, progress));
 
         // --- TOP AREA (left of the subscreen) ---
         // A centered status row where the round display is narrow, then the logo filling the
@@ -190,10 +254,8 @@ class RetroInstinctView extends WatchUi.WatchFace {
         // Draw Heart Icon
         dc.drawBitmap(centerX + spacing - 16, iconTop, heartIcon);
 
-        // 3. Radiant cross between the two columns (31x30). Its rays grow during the intro and then
-        // pulse (full, half, off, half) with the once-per-second updates while the watch is awake.
+        // 3. Radiant cross body between the two columns (31x30); its rays are animated in onUpdate.
         dc.drawBitmap(centerX - 15, iconTop + 1, crossIcon);
-        drawCrossRays(dc, centerX - 15, iconTop + 1, RetroFormat.rayScale(progress, System.getTimer(), awakeUntil, clock.sec));
 
         // Phone-disconnected icon in the empty band right of the heart
         if (!settings.phoneConnected) {
