@@ -31,7 +31,7 @@ Out of scope: new device targets, user settings/properties, localization, changi
 ## Constraints
 
 - Target: Instinct 2 (176x176 monochrome MIP, subscreen top-right), `minApiLevel` 3.4.0.
-- No Connect IQ SDK on this machine: no `monkeyc`, no simulator. Build and on-device verification must be done by the user in VS Code.
+- Connect IQ SDK 9.2.0 became available mid-feature (user installed it during T9). Builds use the keg-only `openjdk@17` via `PATH` and a throwaway developer key in the session scratchpad (never committed). Earlier tasks (T1-T7) were first verified structurally, then by the T9 build.
 - Keep the app UUID unchanged (changing it creates a different app on the device/store).
 - Commits: Conventional Commits, no AI attribution.
 
@@ -71,12 +71,12 @@ Out of scope: new device targets, user settings/properties, localization, changi
 
 ## Checks
 
-- Test-first exception: no runnable RED is possible (no `monkeyc`, no simulator, no unit-test runner on this machine). Checks are structural instead.
+- Test-first exception for T1-T8: no runnable RED existed (no SDK at the time). From T9 on: `monkeyc -d instinct2` app build, `monkeyc -t` unit-test build, and `monkeydo <test.prg> instinct2 -t` in the simulator.
 - `xmllint --noout` on every changed XML/SVG.
 - Rez reference check: every `Rez.*` used in `source/` exists in `resources/`.
 - Layout mock: a scratchpad Python renderer reproduces the 176x176 frame with the real bitmap fonts to catch overlaps.
 - Parent readback of each diff.
-- Pending for the user: `monkeyc` build and simulator run for Instinct 2.
+- Pending for the user: on-device check on a real Instinct 2.
 
 ## Progress
 

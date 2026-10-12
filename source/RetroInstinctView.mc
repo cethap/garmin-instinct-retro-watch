@@ -70,7 +70,7 @@ class RetroInstinctView extends WatchUi.WatchFace {
         var now = Time.now();
 
         // --- TIME (Center, Large) ---
-        var timeStr = Lang.format("$1$:$2$", [formatHour(clock.hour, settings.is24Hour), clock.min.format("%02d")]);
+        var timeStr = Lang.format("$1$:$2$", [RetroFormat.formatHour(clock.hour, settings.is24Hour), clock.min.format("%02d")]);
         dc.drawText(centerX, centerY+10, fontBig, timeStr, Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
 
         // --- DATE (Subscreen, Small) ---
@@ -79,12 +79,7 @@ class RetroInstinctView extends WatchUi.WatchFace {
         dc.drawText(dateX, dateY, fontSmall, dateStr, Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
 
         // --- BATTERY (Top Center, Pixel Icon) ---
-        var batPct = (sysStats.battery + 0.5).toNumber();
-        if (batPct > 100) {
-            batPct = 100;
-        } else if (batPct < 0) {
-            batPct = 0;
-        }
+        var batPct = RetroFormat.batteryPercent(sysStats.battery);
         var batStr = batPct.format("%d") + "%";
 
         if (sysStats has :batteryInDays && sysStats.batteryInDays != null) {
@@ -112,11 +107,11 @@ class RetroInstinctView extends WatchUi.WatchFace {
         var spacing = 28; // Column offset from center; keeps "12.3K" clear of the HR value
 
         // 1. STEPS (Left)
-        var stepStr = formatSteps(activityInfo.steps);
+        var stepStr = RetroFormat.formatSteps(activityInfo.steps);
 
         // Draw Footprint Icon and the step-goal meter on its left
         dc.drawBitmap(centerX - spacing - 16, iconTop, footprintIcon);
-        drawStepMeter(dc, centerX - spacing - 22, iconTop + 31, activityInfo.steps, activityInfo.stepGoal);
+        drawStepMeter(dc, centerX - spacing - 22, iconTop + 31, RetroFormat.stepMeterSegments(activityInfo.steps, activityInfo.stepGoal));
         dc.drawText(centerX - spacing, textY, fontSmall, stepStr, Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
 
         // 2. HEART RATE (Right)
@@ -134,7 +129,7 @@ class RetroInstinctView extends WatchUi.WatchFace {
         dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_TRANSPARENT);
         dc.fillRectangle(x + 4, y + 4, 32, 16);
         dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
-        var fill = (28 * percent + 50) / 100;
+        var fill = RetroFormat.batteryFillWidth(percent);
         if (fill > 0) {
             dc.fillRectangle(x + 6, y + 6, fill, 12);
         }
@@ -142,14 +137,7 @@ class RetroInstinctView extends WatchUi.WatchFace {
 
     // Retro 10-segment meter filled bottom-up toward the daily step goal.
     // Segments are 4x2 px with a 1px gap; empty ones keep a 2x1 dot so the scale stays visible.
-    private function drawStepMeter(dc as Dc, x as Number, bottom as Number, steps, goal) as Void {
-        var filled = 0;
-        if (steps != null && goal != null && goal > 0) {
-            filled = steps * 10 / goal;
-            if (filled > 10) {
-                filled = 10;
-            }
-        }
+    private function drawStepMeter(dc as Dc, x as Number, bottom as Number, filled as Number) as Void {
         for (var i = 0; i < 10; i++) {
             var y = bottom - (i + 1) * 3 + 1;
             if (i < filled) {
@@ -175,34 +163,6 @@ class RetroInstinctView extends WatchUi.WatchFace {
                 }
             }
         }
-    }
-
-    // Honors the device 12/24h setting; 12h hours have no leading zero.
-    private function formatHour(hour as Number, is24Hour as Boolean) as String {
-        if (is24Hour) {
-            return hour.format("%02d");
-        }
-        hour = hour % 12;
-        if (hour == 0) {
-            hour = 12;
-        }
-        return hour.format("%d");
-    }
-
-    // 9876 -> "9876", 12345 -> "12.3K", 123456 -> "123K", null -> "--".
-    // Integer math truncates, so the value never rounds above the real count.
-    private function formatSteps(steps) as String {
-        if (steps == null) {
-            return "--";
-        }
-        if (steps >= 100000) {
-            return (steps / 1000).format("%d") + "K";
-        }
-        if (steps >= 10000) {
-            var tenths = steps / 100;
-            return (tenths / 10).format("%d") + "." + (tenths % 10).format("%d") + "K";
-        }
-        return steps.format("%d");
     }
 
     // Live HR first; otherwise the newest valid history sample; "--" when off-wrist.
