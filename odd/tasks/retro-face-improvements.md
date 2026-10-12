@@ -61,7 +61,7 @@ Out of scope: new device targets, user settings/properties, localization, changi
 | T13 | `feat`: move the step-goal meter to a segmented ring around the date in the subscreen (user request: did not like the dots next to the footprint) | inline (1 non-trivial file) | [x] 38036f5 (build 0 warnings, 9/9 tests) |
 | T14 | `fix`: keep the leading zero on the hour in 12h mode (**user request**: "me gusta que se vea el 0 antes", seeing `8:16` in the simulator) | inline (1 helper + test) | [x] 6002635 (RED `8=8` -> GREEN `8=08`, 9/9) |
 | T15 | `style`: center the date's ink inside the ring (user request: it sat to the left) and move ring angles into `RetroFormat` with a test | inline (view + helper + test) | [x] date-centering commit (RED: undefined symbol -> GREEN 10/10) |
-| T16 | `style`: minimal pixel fixes on the original Yeshua SVG (user request: keep the original, but improve it) | inline (1 asset) | [ ] awaiting the user's OK after the simulator preview |
+| T16 | `style`: minimal pixel fixes on the original Yeshua SVG (user request: keep the original, but improve it) | inline (1 asset) | [x] approved by the user after the simulator preview ("quedó mejor"), 32 px changed |
 | T8 | `docs`: README features and build notes | inline (passive doc) | [x] docs commit that also closes this document (assess pending at commit time) |
 
 ## Acceptance criteria
