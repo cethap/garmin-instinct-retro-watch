@@ -18,6 +18,7 @@ class RetroInstinctView extends WatchUi.WatchFace {
     var dateX;
     var dateY;
     var boltIcon;
+    var phoneOffIcon;
 
     function initialize() {
         WatchFace.initialize();
@@ -25,6 +26,7 @@ class RetroInstinctView extends WatchUi.WatchFace {
         dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
         // 1-bit pixel art: one bitmask per row, most significant bit is the left pixel.
         boltIcon = [0x0E, 0x1C, 0x38, 0x70, 0xFE, 0x7F, 0x0E, 0x1C, 0x38, 0x70, 0x60, 0x80]; // 8x12
+        phoneOffIcon = [0x1FE, 0x3FF, 0x303, 0x34B, 0x333, 0x333, 0x34B, 0x303, 0x303, 0x3FF, 0x3CF, 0x1FE]; // 10x12
     }
 
     // Load resources and resolve the date position once
@@ -96,6 +98,9 @@ class RetroInstinctView extends WatchUi.WatchFace {
         drawBattery(dc, clusterX - 22, 33, batPct); // 44x24 including the terminal
         if (sysStats has :charging && sysStats.charging) {
             drawPixelArt(dc, clusterX + 26, 39, boltIcon, 8); // right of the terminal
+        }
+        if (!settings.phoneConnected) {
+            drawPixelArt(dc, clusterX - 36, 39, phoneOffIcon, 10); // left of the battery
         }
         dc.drawText(clusterX, 68, fontSmall, batStr, Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
 
