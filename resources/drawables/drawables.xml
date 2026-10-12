@@ -3,4 +3,6 @@
     <bitmap id="FootprintIcon" filename="footprint.svg" dithering="none" />
     <bitmap id="HeartIcon" filename="heart.svg" dithering="none" />
     <bitmap id="Yeshua" filename="yeshua.svg" dithering="none" />
+    <bitmap id="CrossIcon" filename="cross.png" dithering="none" />
+    <bitmap id="Vignette" filename="vignette.png" dithering="none" />
 </drawables>

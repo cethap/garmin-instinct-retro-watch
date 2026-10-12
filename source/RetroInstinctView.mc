@@ -14,6 +14,8 @@ class RetroInstinctView extends WatchUi.WatchFace {
     var footprintIcon;
     var heartIcon;
     var yeshuaLogo;
+    var crossIcon;
+    var vignette;
     var dayNames as Array<String>;
     var dateX;
     var dateY;
@@ -41,6 +43,8 @@ class RetroInstinctView extends WatchUi.WatchFace {
         footprintIcon = WatchUi.loadResource(Rez.Drawables.FootprintIcon);
         heartIcon = WatchUi.loadResource(Rez.Drawables.HeartIcon);
         yeshuaLogo = WatchUi.loadResource(Rez.Drawables.Yeshua);
+        crossIcon = WatchUi.loadResource(Rez.Drawables.CrossIcon);
+        vignette = WatchUi.loadResource(Rez.Drawables.Vignette);
 
         // Center the date and the step ring in the subscreen; fall back to the Instinct 2 geometry.
         dateX = dc.getWidth() - 32;
@@ -68,6 +72,10 @@ class RetroInstinctView extends WatchUi.WatchFace {
 
         // 2. SET DRAW COLOR
         dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
+
+        // Dithered vignette that fades in toward the round bottom edge (176x60, precomputed so it
+        // costs one drawBitmap; its dots keep a 3px margin around the stats and the cross).
+        dc.drawBitmap(0, centerY + 28, vignette);
 
         // --- DATA FETCHING ---
         var activityInfo = ActivityMonitor.getInfo();
@@ -100,7 +108,7 @@ class RetroInstinctView extends WatchUi.WatchFace {
 
         var iconTop = centerY + 31;
         var textY = centerY + 72;
-        var spacing = 28; // Column offset from center; keeps "12.3K" clear of the HR value
+        var spacing = 30; // Column offset from center; leaves room for the cross between the columns
 
         // 1. STEPS (Left)
         var stepStr = RetroFormat.formatSteps(activityInfo.steps);
@@ -113,9 +121,12 @@ class RetroInstinctView extends WatchUi.WatchFace {
         // Draw Heart Icon
         dc.drawBitmap(centerX + spacing - 16, iconTop, heartIcon);
 
-        // Phone-disconnected icon in the gap between the two stat icons
+        // 3. Radiant cross between the two columns (31x30)
+        dc.drawBitmap(centerX - 15, iconTop + 1, crossIcon);
+
+        // Phone-disconnected icon in the empty band right of the heart
         if (!settings.phoneConnected) {
-            drawPixelArt(dc, centerX - 5, iconTop + 10, phoneOffIcon, 10);
+            drawPixelArt(dc, centerX + 52, iconTop + 10, phoneOffIcon, 10);
         }
         dc.drawText(centerX + spacing, textY, fontSmall, getHeartRate(now.value() / 60), Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
     }

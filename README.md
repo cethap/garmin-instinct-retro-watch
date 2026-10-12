@@ -14,7 +14,9 @@ A custom watch face for the Garmin Instinct 2, featuring a retro pixel-art aesth
 - **Battery**: compact status row with a pixel battery whose fill matches the exact charge and the percentage; a bolt replaces the % sign while charging.
 - **Steps**: daily count (`12.3K` from 10,000 steps) and a 10-segment ring around the date that fills toward your step goal.
 - **Heart Rate**: live reading when available, otherwise the latest valid sample; `--` when the watch is off-wrist.
-- **Phone Status**: a crossed-phone icon appears between the steps and heart-rate icons when the phone is disconnected.
+- **Radiant Cross**: a pixel-art cross with light rays between the steps and heart-rate columns.
+- **Dithered Vignette**: a subtle retro dot gradient that fades in toward the round bottom edge.
+- **Phone Status**: a crossed-phone icon appears right of the heart rate when the phone is disconnected.
 - **Yeshua Fish Icon**: custom logo shown large at the top, with pixel fixes for the 1-bit display.
 
 ## Device Support
