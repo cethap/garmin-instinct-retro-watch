@@ -121,7 +121,7 @@ class RetroInstinctView extends WatchUi.WatchFace {
         // 2. HEART RATE (Right)
         // Draw Heart Icon
         dc.drawBitmap(centerX + spacing - 16, iconTop, heartIcon);
-        dc.drawText(centerX + spacing, textY, fontSmall, getHeartRate(clock.min), Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+        dc.drawText(centerX + spacing, textY, fontSmall, getHeartRate(now.value() / 60), Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
     }
 
     // Pixel battery: 40x24 body with a 4px border, 28x12 proportional fill and a 4x12 terminal.
@@ -171,17 +171,19 @@ class RetroInstinctView extends WatchUi.WatchFace {
 
     // Live HR on every update; the history fallback is re-read at most once per minute,
     // since onUpdate() runs every second in high-power mode. "--" when off-wrist.
-    private function getHeartRate(minute as Number) as String {
+    // minuteKey is the epoch minute, so a cached value never matches the same minute of another hour.
+    private function getHeartRate(minuteKey as Number) as String {
         var activity = Activity.getActivityInfo();
         if (activity != null) {
             var liveHr = activity.currentHeartRate;
             if (liveHr != null) {
+                hrFallbackMinute = -1; // the next fallback read must be fresh
                 return liveHr.format("%d");
             }
         }
-        if (minute != hrFallbackMinute) {
+        if (minuteKey != hrFallbackMinute) {
             hrFallback = readHeartRateHistory();
-            hrFallbackMinute = minute;
+            hrFallbackMinute = minuteKey;
         }
         return hrFallback;
     }

@@ -56,6 +56,7 @@ Out of scope: new device targets, user settings/properties, localization, changi
 | T7 | `feat`: phone-disconnected indicator (1-bit pixel art drawn with primitives, no SVG) | inline (1 non-trivial file) | [x] 49af187 (assess: medium, under_budget) |
 | T9 | `test`: extract pure formatters (steps, hour, battery fill) into a module and add `(:test)` unit tests the user can run with the SDK | inline (moved code is mechanical; the test file is the only new non-trivial file) | [x] a204dc1 compiler-warning fixes + 295e270 tests (assess: medium, under_budget) |
 | T10 | `perf`: cache the heart-rate history fallback per minute (live HR stays per update) | inline (1 small edit) | [x] d77e4aa (assess: medium, under_budget) |
+| T11 | `fix`: key the HR fallback cache by epoch minute and invalidate it while live HR is used (review finding `R3-hr-fallback-minute-key-staleness`) | inline (1 small edit) | [x] this commit (build 0 warnings, 9/9 tests) |
 | T8 | `docs`: README features and build notes | inline (passive doc) | [x] docs commit that also closes this document (assess pending at commit time) |
 
 ## Acceptance criteria
@@ -93,6 +94,8 @@ Out of scope: new device targets, user settings/properties, localization, changi
 - SDK verification (T9 onward, covering all earlier tasks): `monkeyc -d instinct2` -> BUILD SUCCESSFUL. The first build showed 2 warnings (24x24 launcher icon on a 62x62 device; untyped `dayNames` container access); both were fixed in `a204dc1`, and later builds have 0 warnings. `monkeyc -t` -> BUILD SUCCESSFUL; `monkeydo ... instinct2 -t` -> **PASSED (passed=9, failed=0, errors=0)**.
 - Mutation check (RED): reintroducing the original `(steps / 1000).format("%.1f")` in a scratch copy made `formatStepsTruncatesToTenthsFrom10K` FAIL with `12345=12.0K` (8 passed, 1 failed). The real code passes (GREEN).
 - Simulator run of the release build: loaded on instinct2 with an empty runtime log (no exceptions). No screenshot was taken because the terminal has no screen-recording permission.
+- Review `review-5b60a0611c3b44e1` (lens: reliability) over `cc74857..87e9d97`, run under the user's standing consent: **approved**, acknowledged, authority burned; reviewed boundary is now `87e9d97`. `R3-hr-fallback-minute-key-staleness` (WARNING, a real T10 bug: the `clock.min` key could replay a value from another hour) -> fixed in T11. `R3-hr-cache-untested` (SUGGESTION) -> not taken: after T11 the cache is a single comparison inside device-API code, and extracting a class only to test `!=` adds ceremony without coverage of the real risk (the key choice), which the comment now documents.
+- Tooling note: the collect submission for the intended-untracked selection omitted the `--base-ref` selector and resolved the whole branch (`ad09682`) instead of the requested slice (`cc74857`). That START was not run; the preflight was re-issued with `--untracked-scope=exclude --expected-untracked-inventory=...`, which kept the slice target.
 - Out-of-scope follow-ups: refresh `preview.png` with a new simulator screenshot; on-device check on a real Instinct 2.
 
 ## Next step
