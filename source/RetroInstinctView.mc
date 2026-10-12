@@ -1,3 +1,4 @@
+import Toybox.Activity;
 import Toybox.Graphics;
 import Toybox.Lang;
 import Toybox.System;
@@ -22,9 +23,6 @@ class RetroInstinctView extends WatchUi.WatchFace {
     var bat75;
     var bat90;
     var bat100;
-
-    var lastHr = "--";
-    var lastHrMin = -1;
 
     function initialize() {
         WatchFace.initialize();
@@ -64,11 +62,12 @@ class RetroInstinctView extends WatchUi.WatchFace {
         // --- DATA FETCHING ---
         var activityInfo = ActivityMonitor.getInfo();
         var sysStats = System.getSystemStats();
+        var settings = System.getDeviceSettings();
         var clock = System.getClockTime();
         var now = Time.now();
 
         // --- TIME (Center, Large) ---
-        var timeStr = Lang.format("$1$:$2$", [clock.hour.format("%02d"), clock.min.format("%02d")]);
+        var timeStr = Lang.format("$1$:$2$", [formatHour(clock.hour, settings.is24Hour), clock.min.format("%02d")]);
         dc.drawText(centerX, centerY+10, fontBig, timeStr, Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
 
         // --- DATE (Top Right, Small) ---
@@ -83,7 +82,7 @@ class RetroInstinctView extends WatchUi.WatchFace {
         if (sysStats has :batteryInDays && sysStats.batteryInDays != null) {
             batStr += " " + sysStats.batteryInDays.format("%d") + "d";
         }
-        
+
         var batIcon;
         if (batVal < 8) {
             batIcon = bat0;
@@ -112,44 +111,74 @@ class RetroInstinctView extends WatchUi.WatchFace {
 
         // --- STATS ROW (Bottom) ---
         // Layout: Steps (Left) | HR (Right)
-        
+
         var iconY = centerY + 45;
         var textY = iconY + 25;
         var spacing = 25; // Spacing from center
 
         // 1. STEPS (Left)
-        var steps = activityInfo.steps;
-        var stepStr;
-        if (steps >= 10000) {
-            stepStr = (steps / 1000).format("%.1f") + "K";
-        } else {
-            stepStr = steps.toString();
-        }
-        
+        var stepStr = formatSteps(activityInfo.steps);
+
         // Draw Footprint Icon
-        dc.drawBitmap(centerX - spacing - 16, iconY - 16, footprintIcon); 
+        dc.drawBitmap(centerX - spacing - 16, iconY - 16, footprintIcon);
         dc.drawText(centerX - spacing, textY, fontSmall, stepStr, Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
 
         // 2. HEART RATE (Right)
-        // Update only once per minute
-        if (clock.min != lastHrMin) {
-            if (activityInfo has :currentHeartRate && activityInfo.currentHeartRate != null) {
-                lastHr = activityInfo.currentHeartRate.toString();
-            } else {
-                var hrHistory = ActivityMonitor.getHeartRateHistory(1, true);
-                if (hrHistory != null) {
-                    var sample = hrHistory.next();
-                    if (sample != null && sample.heartRate != ActivityMonitor.INVALID_HR_SAMPLE) {
-                        lastHr = sample.heartRate.toString();
+        // Draw Heart Icon
+        dc.drawBitmap(centerX + spacing - 16, iconY - 16, heartIcon);
+        dc.drawText(centerX + spacing, textY, fontSmall, getHeartRate(), Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+    }
+
+    // Honors the device 12/24h setting; 12h hours have no leading zero.
+    private function formatHour(hour as Number, is24Hour as Boolean) as String {
+        if (is24Hour) {
+            return hour.format("%02d");
+        }
+        hour = hour % 12;
+        if (hour == 0) {
+            hour = 12;
+        }
+        return hour.format("%d");
+    }
+
+    // 9876 -> "9876", 12345 -> "12.3K", 123456 -> "123K", null -> "--".
+    // Integer math truncates, so the value never rounds above the real count.
+    private function formatSteps(steps) as String {
+        if (steps == null) {
+            return "--";
+        }
+        if (steps >= 100000) {
+            return (steps / 1000).format("%d") + "K";
+        }
+        if (steps >= 10000) {
+            var tenths = steps / 100;
+            return (tenths / 10).format("%d") + "." + (tenths % 10).format("%d") + "K";
+        }
+        return steps.format("%d");
+    }
+
+    // Live HR first; otherwise the newest valid history sample; "--" when off-wrist.
+    private function getHeartRate() as String {
+        var activity = Activity.getActivityInfo();
+        if (activity != null) {
+            var liveHr = activity.currentHeartRate;
+            if (liveHr != null) {
+                return liveHr.format("%d");
+            }
+        }
+        if (ActivityMonitor has :getHeartRateHistory) {
+            var history = ActivityMonitor.getHeartRateHistory(1, true);
+            if (history != null) {
+                var sample = history.next();
+                if (sample != null) {
+                    var sampleHr = sample.heartRate;
+                    if (sampleHr != null && sampleHr != ActivityMonitor.INVALID_HR_SAMPLE) {
+                        return sampleHr.format("%d");
                     }
                 }
             }
-            lastHrMin = clock.min;
         }
-        
-        // Draw Heart Icon
-        dc.drawBitmap(centerX + spacing - 16, iconY - 16, heartIcon);
-        dc.drawText(centerX + spacing, textY, fontSmall, lastHr, Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+        return "--";
     }
 
     // Helper to turn Day Number into Name
