@@ -119,7 +119,7 @@ Out of scope: new device targets, user settings/properties, localization, changi
 - Review over `28c616c..f7a4fd9` (T15-T18), run under the standing consent: **approved**, acknowledged; reviewed boundary is now `f7a4fd9`. `R3-001` (SUGGESTION): the date offsets come from simulator font metrics. The risk is low because `fontSmall` is the app's own compiled bitmap font (`pixel_small.fnt`), not a device font. The on-device check stays listed as a follow-up.
 - Out-of-scope follow-ups: refresh `preview.png` with a new simulator screenshot; on-device check on a real Instinct 2.
 
-- Review over `f7a4fd9..0f4ba4d` (T19-T24): **approved**, acknowledged. `R3-001` (WARNING) fixed in T25; `R3-002` (SUGGESTION) covered by the `rayScale` test.
+- Review over `f7a4fd9..cb11dd7` (T19-T24): **approved**, acknowledged. `R3-001` (WARNING) fixed in T25; `R3-002` (SUGGESTION) covered by the `rayScale` test.
 - Delivery: PR #1 opened (https://github.com/cethap/garmin-instinct-retro-watch/pull/1). The repo has no PR template, labels or Actions, so the issue/label gates from the PR skill do not apply. The release build was sideloaded to the user's Instinct 2 by replacing `APPS/CETHAP.PRG` (same app UUID; the old file is backed up in the session scratchpad).
 
 ## Next step
