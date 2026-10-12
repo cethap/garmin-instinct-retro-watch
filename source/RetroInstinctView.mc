@@ -6,7 +6,6 @@ import Toybox.WatchUi;
 import Toybox.Time;
 import Toybox.Time.Gregorian;
 import Toybox.ActivityMonitor;
-import Toybox.SensorHistory;
 
 class RetroInstinctView extends WatchUi.WatchFace {
 
@@ -15,17 +14,12 @@ class RetroInstinctView extends WatchUi.WatchFace {
     var footprintIcon;
     var heartIcon;
     var yeshuaLogo;
-    var bat0;
-    var bat15;
-    var bat30;
-    var bat45;
-    var bat60;
-    var bat75;
-    var bat90;
-    var bat100;
+    var dayNames;
 
     function initialize() {
         WatchFace.initialize();
+        // Built once instead of on every onUpdate().
+        dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
     }
 
     // Load custom pixel fonts
@@ -35,15 +29,6 @@ class RetroInstinctView extends WatchUi.WatchFace {
         footprintIcon = WatchUi.loadResource(Rez.Drawables.FootprintIcon);
         heartIcon = WatchUi.loadResource(Rez.Drawables.HeartIcon);
         yeshuaLogo = WatchUi.loadResource(Rez.Drawables.Yeshua);
-
-        bat0 = WatchUi.loadResource(Rez.Drawables.Battery0);
-        bat15 = WatchUi.loadResource(Rez.Drawables.Battery15);
-        bat30 = WatchUi.loadResource(Rez.Drawables.Battery30);
-        bat45 = WatchUi.loadResource(Rez.Drawables.Battery45);
-        bat60 = WatchUi.loadResource(Rez.Drawables.Battery60);
-        bat75 = WatchUi.loadResource(Rez.Drawables.Battery75);
-        bat90 = WatchUi.loadResource(Rez.Drawables.Battery90);
-        bat100 = WatchUi.loadResource(Rez.Drawables.Battery100);
     }
 
     function onUpdate(dc as Dc) as Void {
@@ -75,38 +60,23 @@ class RetroInstinctView extends WatchUi.WatchFace {
         var dateStr = Lang.format("$1$\n$2$", [getDayName(info.day_of_week), info.day.format("%02d")]);
         dc.drawText(w - 32, 30, fontSmall, dateStr, Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
 
-        // --- BATTERY (Top Center, Dynamic Icon) ---
-        var batVal = sysStats.battery;
-        var batStr = batVal.format("%d") + "%";
+        // --- BATTERY (Top Center, Pixel Icon) ---
+        var batPct = (sysStats.battery + 0.5).toNumber();
+        if (batPct > 100) {
+            batPct = 100;
+        } else if (batPct < 0) {
+            batPct = 0;
+        }
+        var batStr = batPct.format("%d") + "%";
 
         if (sysStats has :batteryInDays && sysStats.batteryInDays != null) {
             batStr += " " + sysStats.batteryInDays.format("%d") + "d";
         }
 
-        var batIcon;
-        if (batVal < 8) {
-            batIcon = bat0;
-        } else if (batVal < 23) {
-            batIcon = bat15;
-        } else if (batVal < 38) {
-            batIcon = bat30;
-        } else if (batVal < 53) {
-            batIcon = bat45;
-        } else if (batVal < 68) {
-            batIcon = bat60;
-        } else if (batVal < 83) {
-            batIcon = bat75;
-        } else if (batVal < 95) {
-            batIcon = bat90;
-        } else {
-            batIcon = bat100;
-        }
-
         // Draw Battery Icon and Text
-        // Icon size 64x64 (defined in drawables.xml)
         // Move icon UP to avoid overlap. centerY is 88.
         dc.drawBitmap(centerX - 55, centerY - 105, yeshuaLogo);
-        dc.drawBitmap(centerX - 55, centerY - 75, batIcon);
+        drawBattery(dc, centerX - 43, centerY - 55, batPct);
         dc.drawText(centerX-25, centerY - 20, fontSmall, batStr, Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
 
         // --- STATS ROW (Bottom) ---
@@ -127,6 +97,21 @@ class RetroInstinctView extends WatchUi.WatchFace {
         // Draw Heart Icon
         dc.drawBitmap(centerX + spacing - 16, iconY - 16, heartIcon);
         dc.drawText(centerX + spacing, textY, fontSmall, getHeartRate(), Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+    }
+
+    // Pixel battery: 40x24 body with a 4px border, 28x12 proportional fill and a 4x12 terminal.
+    // Drawn with primitives so no battery bitmaps stay loaded in memory.
+    private function drawBattery(dc as Dc, x as Number, y as Number, percent as Number) as Void {
+        dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
+        dc.fillRectangle(x, y, 40, 24);
+        dc.fillRectangle(x + 40, y + 6, 4, 12);
+        dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_TRANSPARENT);
+        dc.fillRectangle(x + 4, y + 4, 32, 16);
+        dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
+        var fill = (28 * percent + 50) / 100;
+        if (fill > 0) {
+            dc.fillRectangle(x + 6, y + 6, fill, 12);
+        }
     }
 
     // Honors the device 12/24h setting; 12h hours have no leading zero.
@@ -183,7 +168,6 @@ class RetroInstinctView extends WatchUi.WatchFace {
 
     // Helper to turn Day Number into Name
     function getDayName(day) {
-        var names = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-        return names[day - 1];
+        return dayNames[day - 1];
     }
 }
