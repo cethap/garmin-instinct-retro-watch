@@ -17,11 +17,14 @@ class RetroInstinctView extends WatchUi.WatchFace {
     var dayNames;
     var dateX;
     var dateY;
+    var boltIcon;
 
     function initialize() {
         WatchFace.initialize();
         // Built once instead of on every onUpdate().
         dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+        // 1-bit pixel art: one bitmask per row, most significant bit is the left pixel.
+        boltIcon = [0x0E, 0x1C, 0x38, 0x70, 0xFE, 0x7F, 0x0E, 0x1C, 0x38, 0x70, 0x60, 0x80]; // 8x12
     }
 
     // Load resources and resolve the date position once
@@ -91,6 +94,9 @@ class RetroInstinctView extends WatchUi.WatchFace {
         var clusterX = centerX - 23;
         dc.drawBitmap(clusterX - 32, 5, yeshuaLogo); // 64x24
         drawBattery(dc, clusterX - 22, 33, batPct); // 44x24 including the terminal
+        if (sysStats has :charging && sysStats.charging) {
+            drawPixelArt(dc, clusterX + 26, 39, boltIcon, 8); // right of the terminal
+        }
         dc.drawText(clusterX, 68, fontSmall, batStr, Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
 
         // --- STATS ROW (Bottom) ---
@@ -145,6 +151,23 @@ class RetroInstinctView extends WatchUi.WatchFace {
                 dc.fillRectangle(x, y, 4, 2);
             } else {
                 dc.fillRectangle(x + 1, y + 1, 2, 1);
+            }
+        }
+    }
+
+    // Draws 1-bit pixel art as horizontal runs, one fillRectangle per run.
+    private function drawPixelArt(dc as Dc, x as Number, y as Number, rows as Array<Number>, width as Number) as Void {
+        for (var j = 0; j < rows.size(); j++) {
+            var row = rows[j];
+            var runStart = -1;
+            for (var i = 0; i <= width; i++) {
+                var on = i < width && ((row >> (width - 1 - i)) & 1) == 1;
+                if (on && runStart < 0) {
+                    runStart = i;
+                } else if (!on && runStart >= 0) {
+                    dc.fillRectangle(x + runStart, y + j, i - runStart, 1);
+                    runStart = -1;
+                }
             }
         }
     }
