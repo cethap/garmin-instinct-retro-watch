@@ -60,10 +60,10 @@ Out of scope: new device targets, user settings/properties, localization, changi
 | T12 | `style`: replace the SVG-converted Yeshua logo with a hand-drawn 64x24 1-bit PNG | inline (1 asset + 1 XML line) | [x] 570fd8d, **reverted in 28c616c**: the user did not like the redraw |
 | T13 | `feat`: move the step-goal meter to a segmented ring around the date in the subscreen (user request: did not like the dots next to the footprint) | inline (1 non-trivial file) | [x] 38036f5 (build 0 warnings, 9/9 tests) |
 | T14 | `fix`: keep the leading zero on the hour in 12h mode (**user request**: "me gusta que se vea el 0 antes", seeing `8:16` in the simulator) | inline (1 helper + test) | [x] 6002635 (RED `8=8` -> GREEN `8=08`, 9/9) |
-| T15 | `style`: center the date's ink inside the ring (user request: it sat to the left) and move ring angles into `RetroFormat` with a test | inline (view + helper + test) | [x] date-centering commit (RED: undefined symbol -> GREEN 10/10) |
+| T15 | `style`: center the date's ink inside the ring (user request: it sat to the left) and move ring angles into `RetroFormat` with a test | inline (view + helper + test) | [x] fa89119 (RED: undefined symbol -> GREEN 10/10) |
 | T16 | `style`: minimal pixel fixes on the original Yeshua SVG (user request: keep the original, but improve it) | inline (1 asset) | [x] approved by the user after the simulator preview ("quedó mejor"), 32 px changed |
 | T17 | `style`: logo as hero (88x36, viewBox margin so the belly is not clipped, pixel fixes redone for the size), mini battery status row (bolt replaces `%` while charging, battery days dropped), phone icon moved to a data row (user request) | inline (view + helper/test + asset) | [x] 322c3dd (RED arity error -> GREEN 10/10) |
-| T18 | `feat`: calories data row with a pixel-art flame (user picked calories over notifications, altitude and Body Battery) | inline (view + helper/test) | [x] calories commit (RED undefined symbol -> GREEN 11/11) |
+| T18 | `feat`: calories data row with a pixel-art flame (user picked calories over notifications, altitude and Body Battery) | inline (view + helper/test) | [x] f7a4fd9 (RED undefined symbol -> GREEN 11/11) |
 | T8 | `docs`: README features and build notes | inline (passive doc) | [x] docs commit that also closes this document (assess pending at commit time) |
 
 ## Acceptance criteria
@@ -109,8 +109,9 @@ Out of scope: new device targets, user settings/properties, localization, changi
 - Simulator diagnostics (debug copy in the scratchpad, never committed): `getSubscreen()` = x=113 y=0 w=62 h=62 -> center (144, 31); ring radius 26; `getTextWidthInPixels("Mon")` = 36, `("12")` = 24; `getTextDimensions("Mon\n12")` = [36, 27]. Root cause of the off-center date: the glyphs leave an empty right column (ink 1px left), and `VCENTER` centers the 27px box although the ink is 23px tall (about 2px high). Fix: anchor the top at `dateY - 11` and shift +1px. The ink box (35x23, corners about 21px from center) clears the ring's inner edge (radius 25).
 - Top-area redesign measured against the display mask: visible band left of the subscreen is x 30..108 at y=4, x 0..100 at y=30 and x 0..112 at y=58. Status row centered at x=67 (y 4..15), logo at (10, 18), data row at y 58..69, time digits from y=79. Mock checks: zero clipped pixels for normal, charging + phone-off + 5-digit calories states.
 - Mock bug found and fixed: the icon loader sampled QuickLook rasters with an integer scale (512 // 88 = 5), which stretched and clipped non-power-of-two sizes; it now crops the viewport and resamples with a box filter.
+- Review over `28c616c..f7a4fd9` (T15-T18), run under the standing consent: **approved**, acknowledged; reviewed boundary is now `f7a4fd9`. `R3-001` (SUGGESTION): the date offsets come from simulator font metrics. The risk is low because `fontSmall` is the app's own compiled bitmap font (`pixel_small.fnt`), not a device font. The on-device check stays listed as a follow-up.
 - Out-of-scope follow-ups: refresh `preview.png` with a new simulator screenshot; on-device check on a real Instinct 2.
 
 ## Next step
 
-Feature complete on `feat/retro-face-improvements`. Push and the single PR are the user's decision.
+Feature complete on `feat/retro-face-improvements` (all slices reviewed and acknowledged up to `f7a4fd9`). Pending for the user: on-device check, a new `preview.png` screenshot, then push and the single PR.
