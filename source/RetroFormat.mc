@@ -83,6 +83,18 @@ module RetroFormat {
         return 0.5;
     }
 
+    // Cross ray length scale: grows with the intro, pulses while the watch is awake, and stays full
+    // once the awake window is over, even if onEnterSleep never arrived.
+    function rayScale(progress as Float, nowMs as Number, awakeUntilMs as Number, second as Number) as Float {
+        if (progress < 1.0) {
+            return progress;
+        }
+        if (nowMs < awakeUntilMs) {
+            return twinkleScale(second);
+        }
+        return 1.0;
+    }
+
     // Filled segments (0..10) of the step-goal meter; 0 when steps or goal are unknown.
     function stepMeterSegments(steps, goal) as Number {
         if (steps == null || goal == null || goal <= 0) {

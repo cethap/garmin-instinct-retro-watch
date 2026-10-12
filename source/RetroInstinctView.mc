@@ -10,6 +10,8 @@ import Toybox.Timer;
 
 // Length of the wrist-raise intro animation, in milliseconds.
 const INTRO_MS = 1500;
+// Upper bound of the high-power window after a wake (the system uses about ten seconds).
+const AWAKE_MS = 10000;
 
 class RetroInstinctView extends WatchUi.WatchFace {
 
@@ -30,7 +32,7 @@ class RetroInstinctView extends WatchUi.WatchFace {
     var hrFallbackMinute;
     var animTimer;
     var introStart;
-    var awake;
+    var awakeUntil;
 
     function initialize() {
         WatchFace.initialize();
@@ -40,7 +42,7 @@ class RetroInstinctView extends WatchUi.WatchFace {
         boltIcon = [0x0E, 0x1C, 0x38, 0x70, 0xFE, 0x7F, 0x0E, 0x1C, 0x38, 0x70, 0x60, 0x80]; // 8x12
         hrFallback = "--";
         hrFallbackMinute = -1;
-        awake = true;
+        awakeUntil = 0;
         phoneOffIcon = [0x1FE, 0x3FF, 0x303, 0x34B, 0x333, 0x333, 0x34B, 0x303, 0x303, 0x3FF, 0x3CF, 0x1FE]; // 10x12
     }
 
@@ -78,13 +80,12 @@ class RetroInstinctView extends WatchUi.WatchFace {
 
     // Raising the wrist: high-power mode allows timers and animations for about ten seconds.
     function onExitSleep() as Void {
-        awake = true;
         startIntro();
     }
 
     // Back to low power: no timers or animations, so settle on the static face.
     function onEnterSleep() as Void {
-        awake = false;
+        awakeUntil = 0;
         stopAnimation();
         introStart = null;
         WatchUi.requestUpdate();
@@ -101,6 +102,7 @@ class RetroInstinctView extends WatchUi.WatchFace {
     private function startIntro() as Void {
         stopAnimation();
         introStart = System.getTimer();
+        awakeUntil = introStart + AWAKE_MS;
         if (animTimer == null) {
             animTimer = new Timer.Timer();
         }
@@ -191,11 +193,7 @@ class RetroInstinctView extends WatchUi.WatchFace {
         // 3. Radiant cross between the two columns (31x30). Its rays grow during the intro and then
         // pulse (full, half, off, half) with the once-per-second updates while the watch is awake.
         dc.drawBitmap(centerX - 15, iconTop + 1, crossIcon);
-        var rayScale = progress;
-        if (progress >= 1.0 && awake) {
-            rayScale = RetroFormat.twinkleScale(clock.sec);
-        }
-        drawCrossRays(dc, centerX - 15, iconTop + 1, rayScale);
+        drawCrossRays(dc, centerX - 15, iconTop + 1, RetroFormat.rayScale(progress, System.getTimer(), awakeUntil, clock.sec));
 
         // Phone-disconnected icon in the empty band right of the heart
         if (!settings.phoneConnected) {

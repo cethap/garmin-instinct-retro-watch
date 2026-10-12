@@ -130,3 +130,14 @@ function twinkleScaleCyclesEveryFourSeconds(logger as Logger) as Boolean {
     logger.debug("0=" + s0 + " 1=" + s1 + " 2=" + s2 + " 3=" + s3 + " 7=" + s7);
     return s0 == 1.0 && s1 == 0.5 && s2 == 0.0 && s3 == 0.5 && s7 == 0.5;
 }
+
+(:test)
+function rayScaleFollowsIntroThenAwakeWindow(logger as Logger) as Boolean {
+    var intro = RetroFormat.rayScale(0.5, 1000, 11000, 2);
+    var awakeOff = RetroFormat.rayScale(1.0, 5000, 11000, 2);
+    var awakeHalf = RetroFormat.rayScale(1.0, 5000, 11000, 1);
+    var asleep = RetroFormat.rayScale(1.0, 20000, 11000, 2);
+    var neverWoke = RetroFormat.rayScale(1.0, 20000, 0, 2);
+    logger.debug("intro=" + intro + " awakeOff=" + awakeOff + " awakeHalf=" + awakeHalf + " asleep=" + asleep + " neverWoke=" + neverWoke);
+    return intro == 0.5 && awakeOff == 0.0 && awakeHalf == 0.5 && asleep == 1.0 && neverWoke == 1.0;
+}

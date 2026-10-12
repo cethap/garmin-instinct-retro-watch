@@ -70,6 +70,7 @@ Out of scope: new device targets, user settings/properties, localization, changi
 | T22 | `style`: continuous vignette (user request: the 3px exclusion around the stats looked cut out). The cut-outs are gone, there is an 18px fade-in below the time, and the stat values are drawn with a 1px black outline so they stay readable over the dots | inline (view + asset) | [x] vignette commit (0 warnings) |
 | T23 | `feat`: wrist-raise animation (user picked all three options). On onShow and onExitSleep, an 800ms ease-out intro driven by an 80ms Timer: the step ring charges up, the vignette is revealed bottom-up with setClip, and the cross rays grow (now drawn in code; cross.png holds only the body). After the intro the rays alternate long/short each second while awake. onEnterSleep stops the timer and shows the static face. `introProgress`/`animatedCount` added with tests | inline (view + helper/test + asset) | [x] animation commit (RED undefined symbol -> GREEN 12/12; debug run: 12 frames in ~0.8s, timer self-stops, no errors) |
 | T24 | `style`: make the animation visible (user did not notice it in the simulator). The simulator stays in high-power mode (one onUpdate per second, verified), but the 0.8s intro only played on load, the ring had nothing to fill at 0 steps, and the long/short twinkle was too subtle. The intro is now 1.5s, the ring draws itself segment by segment, and the rays pulse full/half/off/half via `twinkleScale` (tested) | inline (view + helper/test) | [x] visibility commit (RED -> GREEN 13/13) |
+| T25 | `fix`: rays could freeze mid-pulse in low power when the face was created asleep, because `awake` started true and only onEnterSleep cleared it (review finding `R3-001`, WARNING). The pulse is now limited to a 10s awake window set on each wake, through `rayScale` (tested, also covers `R3-002`) | inline (view + helper/test) | [x] fix commit (RED -> GREEN 14/14) |
 | T8 | `docs`: README features and build notes | inline (passive doc) | [x] docs commit that also closes this document (assess pending at commit time) |
 
 ## Acceptance criteria
@@ -118,6 +119,9 @@ Out of scope: new device targets, user settings/properties, localization, changi
 - Review over `28c616c..f7a4fd9` (T15-T18), run under the standing consent: **approved**, acknowledged; reviewed boundary is now `f7a4fd9`. `R3-001` (SUGGESTION): the date offsets come from simulator font metrics. The risk is low because `fontSmall` is the app's own compiled bitmap font (`pixel_small.fnt`), not a device font. The on-device check stays listed as a follow-up.
 - Out-of-scope follow-ups: refresh `preview.png` with a new simulator screenshot; on-device check on a real Instinct 2.
 
+- Review over `f7a4fd9..0f4ba4d` (T19-T24): **approved**, acknowledged. `R3-001` (WARNING) fixed in T25; `R3-002` (SUGGESTION) covered by the `rayScale` test.
+- Delivery: PR #1 opened (https://github.com/cethap/garmin-instinct-retro-watch/pull/1). The repo has no PR template, labels or Actions, so the issue/label gates from the PR skill do not apply. The release build was sideloaded to the user's Instinct 2 by replacing `APPS/CETHAP.PRG` (same app UUID; the old file is backed up in the session scratchpad).
+
 ## Next step
 
-Feature complete on `feat/retro-face-improvements` (all slices reviewed and acknowledged up to `f7a4fd9`). Pending for the user: on-device check, a new `preview.png` screenshot, then push and the single PR.
+The user checks the face on the device, then merges PR #1. Follow-up: refresh `preview.png`.
