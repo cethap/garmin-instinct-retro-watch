@@ -16,7 +16,7 @@ A custom watch face for the Garmin Instinct 2, featuring a retro pixel-art aesth
 - **Heart Rate**: live reading when available, otherwise the latest valid sample; `--` when the watch is off-wrist.
 - **Radiant Cross**: a pixel-art cross with light rays between the steps and heart-rate columns.
 - **Dithered Vignette**: a subtle retro dot gradient that fades in toward the round bottom edge.
-- **Wrist-Raise Intro**: on wrist raise the step ring charges up, the dots rise from the bottom and the cross rays grow (about 0.8 s). The rays then twinkle while you look, and everything settles to a static face in low power.
+- **Wrist-Raise Intro**: on wrist raise the step ring draws itself and charges up, the dots rise from the bottom and the cross rays grow (about 1.5 s). The rays then pulse (full, half, off, half) while you look, and everything settles to a static face in low power.
 - **Phone Status**: a crossed-phone icon appears right of the heart rate when the phone is disconnected.
 - **Yeshua Fish Icon**: custom logo shown large at the top, with pixel fixes for the 1-bit display.
 

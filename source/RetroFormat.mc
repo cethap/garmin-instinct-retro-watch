@@ -71,6 +71,18 @@ module RetroFormat {
         return (total * progress + 0.5).toNumber();
     }
 
+    // Length scale of the cross rays for a clock second: full, half, off, half (a 4-second pulse).
+    function twinkleScale(second as Number) as Float {
+        var phase = second % 4;
+        if (phase == 0) {
+            return 1.0;
+        }
+        if (phase == 2) {
+            return 0.0;
+        }
+        return 0.5;
+    }
+
     // Filled segments (0..10) of the step-goal meter; 0 when steps or goal are unknown.
     function stepMeterSegments(steps, goal) as Number {
         if (steps == null || goal == null || goal <= 0) {

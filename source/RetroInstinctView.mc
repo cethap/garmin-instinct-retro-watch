@@ -9,7 +9,7 @@ import Toybox.ActivityMonitor;
 import Toybox.Timer;
 
 // Length of the wrist-raise intro animation, in milliseconds.
-const INTRO_MS = 800;
+const INTRO_MS = 1500;
 
 class RetroInstinctView extends WatchUi.WatchFace {
 
@@ -159,9 +159,9 @@ class RetroInstinctView extends WatchUi.WatchFace {
         // Center the ink, not the text box, inside the ring: each glyph leaves one empty column
         // on its right, and the two lines are 23px of ink (12px line + 11px glyph).
         dc.drawText(dateX + 1, dateY - 11, fontSmall, dateStr, Graphics.TEXT_JUSTIFY_CENTER);
-        // During the intro the ring charges up from empty to the real progress.
+        // During the intro the ring draws itself segment by segment and charges up to the real progress.
         var ringSegments = RetroFormat.stepMeterSegments(activityInfo.steps, activityInfo.stepGoal);
-        drawStepRing(dc, dateX, dateY, ringRadius, RetroFormat.animatedCount(ringSegments, progress));
+        drawStepRing(dc, dateX, dateY, ringRadius, RetroFormat.animatedCount(ringSegments, progress), RetroFormat.animatedCount(10, progress));
 
         // --- TOP AREA (left of the subscreen) ---
         // A centered status row where the round display is narrow, then the logo filling the
@@ -188,12 +188,12 @@ class RetroInstinctView extends WatchUi.WatchFace {
         // Draw Heart Icon
         dc.drawBitmap(centerX + spacing - 16, iconTop, heartIcon);
 
-        // 3. Radiant cross between the two columns (31x30). Its rays grow during the intro and
-        // then twinkle between long and short every second while the watch is awake.
+        // 3. Radiant cross between the two columns (31x30). Its rays grow during the intro and then
+        // pulse (full, half, off, half) with the once-per-second updates while the watch is awake.
         dc.drawBitmap(centerX - 15, iconTop + 1, crossIcon);
         var rayScale = progress;
-        if (progress >= 1.0 && awake && clock.sec % 2 == 1) {
-            rayScale = 0.5;
+        if (progress >= 1.0 && awake) {
+            rayScale = RetroFormat.twinkleScale(clock.sec);
         }
         drawCrossRays(dc, centerX - 15, iconTop + 1, rayScale);
 
@@ -263,9 +263,9 @@ class RetroInstinctView extends WatchUi.WatchFace {
     }
 
     // Segmented step-goal ring around the date: 10 arcs clockwise from 12 o'clock.
-    // Reached segments are 3px thick; the rest stay as a 1px track.
-    private function drawStepRing(dc as Dc, x as Number, y as Number, radius as Number, filled as Number) as Void {
-        for (var i = 0; i < 10; i++) {
+    // Reached segments are 3px thick; the rest stay as a 1px track. Only the first `visible` are drawn.
+    private function drawStepRing(dc as Dc, x as Number, y as Number, radius as Number, filled as Number, visible as Number) as Void {
+        for (var i = 0; i < visible; i++) {
             dc.setPenWidth(i < filled ? 3 : 1);
             dc.drawArc(x, y, radius, Graphics.ARC_CLOCKWISE, RetroFormat.ringSegmentStart(i), RetroFormat.ringSegmentEnd(i));
         }

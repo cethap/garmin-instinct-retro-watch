@@ -119,3 +119,14 @@ function animatedCountScalesWithProgress(logger as Logger) as Boolean {
     logger.debug("0=" + none + " 0.5=" + half + " 1=" + full + " 5@0.75=" + rays);
     return none == 0 && half == 3 && full == 6 && rays == 4;
 }
+
+(:test)
+function twinkleScaleCyclesEveryFourSeconds(logger as Logger) as Boolean {
+    var s0 = RetroFormat.twinkleScale(0);
+    var s1 = RetroFormat.twinkleScale(1);
+    var s2 = RetroFormat.twinkleScale(2);
+    var s3 = RetroFormat.twinkleScale(3);
+    var s7 = RetroFormat.twinkleScale(7);
+    logger.debug("0=" + s0 + " 1=" + s1 + " 2=" + s2 + " 3=" + s3 + " 7=" + s7);
+    return s0 == 1.0 && s1 == 0.5 && s2 == 0.0 && s3 == 0.5 && s7 == 0.5;
+}
