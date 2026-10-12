@@ -99,3 +99,23 @@ function stepRingSegmentsStartAtNoonClockwise(logger as Logger) as Boolean {
         && wrap[0] == 339 && wrap[1] == 309
         && last[0] == 123 && last[1] == 93;
 }
+
+(:test)
+function introProgressEasesOutAndClamps(logger as Logger) as Boolean {
+    var start = RetroFormat.introProgress(0, 800);
+    var half = RetroFormat.introProgress(400, 800);
+    var done = RetroFormat.introProgress(800, 800);
+    var late = RetroFormat.introProgress(5000, 800);
+    logger.debug("0=" + start + " 400=" + half + " 800=" + done + " 5000=" + late);
+    return start == 0.0 && half == 0.75 && done == 1.0 && late == 1.0;
+}
+
+(:test)
+function animatedCountScalesWithProgress(logger as Logger) as Boolean {
+    var none = RetroFormat.animatedCount(6, 0.0);
+    var half = RetroFormat.animatedCount(6, 0.5);
+    var full = RetroFormat.animatedCount(6, 1.0);
+    var rays = RetroFormat.animatedCount(5, 0.75);
+    logger.debug("0=" + none + " 0.5=" + half + " 1=" + full + " 5@0.75=" + rays);
+    return none == 0 && half == 3 && full == 6 && rays == 4;
+}

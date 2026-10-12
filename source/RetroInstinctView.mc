@@ -6,6 +6,10 @@ import Toybox.WatchUi;
 import Toybox.Time;
 import Toybox.Time.Gregorian;
 import Toybox.ActivityMonitor;
+import Toybox.Timer;
+
+// Length of the wrist-raise intro animation, in milliseconds.
+const INTRO_MS = 800;
 
 class RetroInstinctView extends WatchUi.WatchFace {
 
@@ -24,6 +28,9 @@ class RetroInstinctView extends WatchUi.WatchFace {
     var phoneOffIcon;
     var hrFallback;
     var hrFallbackMinute;
+    var animTimer;
+    var introStart;
+    var awake;
 
     function initialize() {
         WatchFace.initialize();
@@ -33,6 +40,7 @@ class RetroInstinctView extends WatchUi.WatchFace {
         boltIcon = [0x0E, 0x1C, 0x38, 0x70, 0xFE, 0x7F, 0x0E, 0x1C, 0x38, 0x70, 0x60, 0x80]; // 8x12
         hrFallback = "--";
         hrFallbackMinute = -1;
+        awake = true;
         phoneOffIcon = [0x1FE, 0x3FF, 0x303, 0x34B, 0x333, 0x333, 0x34B, 0x303, 0x303, 0x3FF, 0x3CF, 0x1FE]; // 10x12
     }
 
@@ -60,11 +68,62 @@ class RetroInstinctView extends WatchUi.WatchFace {
         }
     }
 
+    function onShow() as Void {
+        startIntro();
+    }
+
+    function onHide() as Void {
+        stopAnimation();
+    }
+
+    // Raising the wrist: high-power mode allows timers and animations for about ten seconds.
+    function onExitSleep() as Void {
+        awake = true;
+        startIntro();
+    }
+
+    // Back to low power: no timers or animations, so settle on the static face.
+    function onEnterSleep() as Void {
+        awake = false;
+        stopAnimation();
+        introStart = null;
+        WatchUi.requestUpdate();
+    }
+
+    // Timer callback: redraw until the intro is over, then stop the timer.
+    function onAnimationTick() as Void {
+        if (introStart == null || System.getTimer() - introStart >= INTRO_MS) {
+            stopAnimation();
+        }
+        WatchUi.requestUpdate();
+    }
+
+    private function startIntro() as Void {
+        stopAnimation();
+        introStart = System.getTimer();
+        if (animTimer == null) {
+            animTimer = new Timer.Timer();
+        }
+        animTimer.start(method(:onAnimationTick), 80, true);
+    }
+
+    private function stopAnimation() as Void {
+        if (animTimer != null) {
+            animTimer.stop();
+        }
+    }
+
     function onUpdate(dc as Dc) as Void {
         var w = dc.getWidth();
         var h = dc.getHeight();
         var centerX = w / 2;
         var centerY = h / 2;
+
+        // Intro progress: 0..1 during the wrist-raise animation, 1 once it is over or asleep.
+        var progress = 1.0;
+        if (introStart != null) {
+            progress = RetroFormat.introProgress(System.getTimer() - introStart, INTRO_MS);
+        }
 
         // 1. CLEAR BACKGROUND
         dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_BLACK);
@@ -75,7 +134,13 @@ class RetroInstinctView extends WatchUi.WatchFace {
 
         // Dithered vignette that fades in toward the round bottom edge (176x60, precomputed so it
         // costs one drawBitmap). The stat values are outlined so they stay readable over it.
-        dc.drawBitmap(0, centerY + 28, vignette);
+        // During the intro it is revealed from the bottom up.
+        var vignetteRows = RetroFormat.animatedCount(60, progress);
+        if (vignetteRows > 0) {
+            dc.setClip(0, centerY + 88 - vignetteRows, w, vignetteRows);
+            dc.drawBitmap(0, centerY + 28, vignette);
+            dc.clearClip();
+        }
 
         // --- DATA FETCHING ---
         var activityInfo = ActivityMonitor.getInfo();
@@ -94,7 +159,9 @@ class RetroInstinctView extends WatchUi.WatchFace {
         // Center the ink, not the text box, inside the ring: each glyph leaves one empty column
         // on its right, and the two lines are 23px of ink (12px line + 11px glyph).
         dc.drawText(dateX + 1, dateY - 11, fontSmall, dateStr, Graphics.TEXT_JUSTIFY_CENTER);
-        drawStepRing(dc, dateX, dateY, ringRadius, RetroFormat.stepMeterSegments(activityInfo.steps, activityInfo.stepGoal));
+        // During the intro the ring charges up from empty to the real progress.
+        var ringSegments = RetroFormat.stepMeterSegments(activityInfo.steps, activityInfo.stepGoal);
+        drawStepRing(dc, dateX, dateY, ringRadius, RetroFormat.animatedCount(ringSegments, progress));
 
         // --- TOP AREA (left of the subscreen) ---
         // A centered status row where the round display is narrow, then the logo filling the
@@ -121,14 +188,36 @@ class RetroInstinctView extends WatchUi.WatchFace {
         // Draw Heart Icon
         dc.drawBitmap(centerX + spacing - 16, iconTop, heartIcon);
 
-        // 3. Radiant cross between the two columns (31x30)
+        // 3. Radiant cross between the two columns (31x30). Its rays grow during the intro and
+        // then twinkle between long and short every second while the watch is awake.
         dc.drawBitmap(centerX - 15, iconTop + 1, crossIcon);
+        var rayScale = progress;
+        if (progress >= 1.0 && awake && clock.sec % 2 == 1) {
+            rayScale = 0.5;
+        }
+        drawCrossRays(dc, centerX - 15, iconTop + 1, rayScale);
 
         // Phone-disconnected icon in the empty band right of the heart
         if (!settings.phoneConnected) {
             drawPixelArt(dc, centerX + 52, iconTop + 10, phoneOffIcon, 10);
         }
         drawOutlinedText(dc, centerX + spacing, textY, getHeartRate(now.value() / 60));
+    }
+
+    // Light rays around the cross at (x, y): two horizontal and four diagonal, length scaled 0..1.
+    private function drawCrossRays(dc as Dc, x as Number, y as Number, scale as Float) as Void {
+        var side = RetroFormat.animatedCount(5, scale);
+        var diagonal = RetroFormat.animatedCount(4, scale);
+        if (side > 0) {
+            dc.fillRectangle(x + 6 - side, y + 8, side, 1);
+            dc.fillRectangle(x + 25, y + 8, side, 1);
+        }
+        for (var k = 0; k < diagonal; k++) {
+            dc.drawPoint(x + 11 - k, y + 5 - k);
+            dc.drawPoint(x + 19 + k, y + 5 - k);
+            dc.drawPoint(x + 11 - k, y + 12 + k);
+            dc.drawPoint(x + 19 + k, y + 12 + k);
+        }
     }
 
     // White text with a 1px black outline, so it stays readable over the dotted vignette.

@@ -57,6 +57,20 @@ module RetroFormat {
         return (ringSegmentStart(i) - 30 + 360) % 360;
     }
 
+    // Ease-out progress (0.0..1.0) of an animation that started elapsedMs ago and lasts durationMs.
+    function introProgress(elapsedMs as Number, durationMs as Number) as Float {
+        if (elapsedMs >= durationMs) {
+            return 1.0;
+        }
+        var t = elapsedMs.toFloat() / durationMs;
+        return 1.0 - (1.0 - t) * (1.0 - t);
+    }
+
+    // How many of total items to show at an animation progress, rounded to the nearest item.
+    function animatedCount(total as Number, progress as Float) as Number {
+        return (total * progress + 0.5).toNumber();
+    }
+
     // Filled segments (0..10) of the step-goal meter; 0 when steps or goal are unknown.
     function stepMeterSegments(steps, goal) as Number {
         if (steps == null || goal == null || goal <= 0) {
