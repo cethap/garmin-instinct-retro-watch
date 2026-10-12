@@ -17,6 +17,7 @@ class RetroInstinctView extends WatchUi.WatchFace {
     var dayNames as Array<String>;
     var dateX;
     var dateY;
+    var ringRadius;
     var boltIcon;
     var phoneOffIcon;
     var hrFallback;
@@ -41,14 +42,16 @@ class RetroInstinctView extends WatchUi.WatchFace {
         heartIcon = WatchUi.loadResource(Rez.Drawables.HeartIcon);
         yeshuaLogo = WatchUi.loadResource(Rez.Drawables.Yeshua);
 
-        // Center the date in the subscreen; fall back to the Instinct 2 position.
+        // Center the date and the step ring in the subscreen; fall back to the Instinct 2 geometry.
         dateX = dc.getWidth() - 32;
         dateY = 30;
+        ringRadius = 26;
         if (WatchUi has :getSubscreen) {
             var subscreen = WatchUi.getSubscreen();
             if (subscreen != null) {
                 dateX = subscreen.x + subscreen.width / 2;
                 dateY = subscreen.y + subscreen.height / 2;
+                ringRadius = subscreen.width / 2 - 5; // keeps the 3px stroke clear of the bezel
             }
         }
     }
@@ -81,6 +84,7 @@ class RetroInstinctView extends WatchUi.WatchFace {
         var info = Gregorian.info(now, Time.FORMAT_SHORT);
         var dateStr = Lang.format("$1$\n$2$", [getDayName(info.day_of_week), info.day.format("%02d")]);
         dc.drawText(dateX, dateY, fontSmall, dateStr, Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+        drawStepRing(dc, dateX, dateY, ringRadius, RetroFormat.stepMeterSegments(activityInfo.steps, activityInfo.stepGoal));
 
         // --- BATTERY (Top Center, Pixel Icon) ---
         var batPct = RetroFormat.batteryPercent(sysStats.battery);
@@ -113,9 +117,8 @@ class RetroInstinctView extends WatchUi.WatchFace {
         // 1. STEPS (Left)
         var stepStr = RetroFormat.formatSteps(activityInfo.steps);
 
-        // Draw Footprint Icon and the step-goal meter on its left
+        // Draw Footprint Icon
         dc.drawBitmap(centerX - spacing - 16, iconTop, footprintIcon);
-        drawStepMeter(dc, centerX - spacing - 22, iconTop + 31, RetroFormat.stepMeterSegments(activityInfo.steps, activityInfo.stepGoal));
         dc.drawText(centerX - spacing, textY, fontSmall, stepStr, Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
 
         // 2. HEART RATE (Right)
@@ -139,17 +142,16 @@ class RetroInstinctView extends WatchUi.WatchFace {
         }
     }
 
-    // Retro 10-segment meter filled bottom-up toward the daily step goal.
-    // Segments are 4x2 px with a 1px gap; empty ones keep a 2x1 dot so the scale stays visible.
-    private function drawStepMeter(dc as Dc, x as Number, bottom as Number, filled as Number) as Void {
+    // Segmented step-goal ring around the date: 10 arcs clockwise from 12 o'clock.
+    // Reached segments are 3px thick; the rest stay as a 1px track.
+    private function drawStepRing(dc as Dc, x as Number, y as Number, radius as Number, filled as Number) as Void {
         for (var i = 0; i < 10; i++) {
-            var y = bottom - (i + 1) * 3 + 1;
-            if (i < filled) {
-                dc.fillRectangle(x, y, 4, 2);
-            } else {
-                dc.fillRectangle(x + 1, y + 1, 2, 1);
-            }
+            var start = (90 - i * 36 - 3 + 360) % 360;
+            var end = (start - 30 + 360) % 360;
+            dc.setPenWidth(i < filled ? 3 : 1);
+            dc.drawArc(x, y, radius, Graphics.ARC_CLOCKWISE, start, end);
         }
+        dc.setPenWidth(1);
     }
 
     // Draws 1-bit pixel art as horizontal runs, one fillRectangle per run.

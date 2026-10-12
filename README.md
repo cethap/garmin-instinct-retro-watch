@@ -12,10 +12,10 @@ A custom watch face for the Garmin Instinct 2, featuring a retro pixel-art aesth
 - **Time**: large digits that follow the watch's 12/24-hour setting.
 - **Date**: day and date centered in the round subscreen.
 - **Battery**: pixel battery whose fill matches the exact charge, with percentage and estimated days remaining. A bolt appears while charging.
-- **Steps**: daily count (`12.3K` from 10,000 steps) with a 10-segment meter that fills toward your step goal.
+- **Steps**: daily count (`12.3K` from 10,000 steps) and a 10-segment ring around the date that fills toward your step goal.
 - **Heart Rate**: live reading when available, otherwise the latest valid sample; `--` when the watch is off-wrist.
 - **Phone Status**: a crossed-phone icon appears when the phone is disconnected.
-- **Yeshua Fish Icon**: custom decorative element.
+- **Yeshua Fish Icon**: custom decorative element, hand-drawn as native 1-bit pixel art.
 
 ## Device Support
 
