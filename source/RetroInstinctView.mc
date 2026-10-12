@@ -19,6 +19,8 @@ class RetroInstinctView extends WatchUi.WatchFace {
     var dateY;
     var boltIcon;
     var phoneOffIcon;
+    var hrFallback;
+    var hrFallbackMinute;
 
     function initialize() {
         WatchFace.initialize();
@@ -26,6 +28,8 @@ class RetroInstinctView extends WatchUi.WatchFace {
         dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
         // 1-bit pixel art: one bitmask per row, most significant bit is the left pixel.
         boltIcon = [0x0E, 0x1C, 0x38, 0x70, 0xFE, 0x7F, 0x0E, 0x1C, 0x38, 0x70, 0x60, 0x80]; // 8x12
+        hrFallback = "--";
+        hrFallbackMinute = -1;
         phoneOffIcon = [0x1FE, 0x3FF, 0x303, 0x34B, 0x333, 0x333, 0x34B, 0x303, 0x303, 0x3FF, 0x3CF, 0x1FE]; // 10x12
     }
 
@@ -117,7 +121,7 @@ class RetroInstinctView extends WatchUi.WatchFace {
         // 2. HEART RATE (Right)
         // Draw Heart Icon
         dc.drawBitmap(centerX + spacing - 16, iconTop, heartIcon);
-        dc.drawText(centerX + spacing, textY, fontSmall, getHeartRate(), Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+        dc.drawText(centerX + spacing, textY, fontSmall, getHeartRate(clock.min), Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
     }
 
     // Pixel battery: 40x24 body with a 4px border, 28x12 proportional fill and a 4x12 terminal.
@@ -165,8 +169,9 @@ class RetroInstinctView extends WatchUi.WatchFace {
         }
     }
 
-    // Live HR first; otherwise the newest valid history sample; "--" when off-wrist.
-    private function getHeartRate() as String {
+    // Live HR on every update; the history fallback is re-read at most once per minute,
+    // since onUpdate() runs every second in high-power mode. "--" when off-wrist.
+    private function getHeartRate(minute as Number) as String {
         var activity = Activity.getActivityInfo();
         if (activity != null) {
             var liveHr = activity.currentHeartRate;
@@ -174,6 +179,15 @@ class RetroInstinctView extends WatchUi.WatchFace {
                 return liveHr.format("%d");
             }
         }
+        if (minute != hrFallbackMinute) {
+            hrFallback = readHeartRateHistory();
+            hrFallbackMinute = minute;
+        }
+        return hrFallback;
+    }
+
+    // Newest valid heart-rate history sample, or "--".
+    private function readHeartRateHistory() as String {
         if (ActivityMonitor has :getHeartRateHistory) {
             var history = ActivityMonitor.getHeartRateHistory(1, true);
             if (history != null) {
