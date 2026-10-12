@@ -40,6 +40,7 @@ class RetroInstinctView extends WatchUi.WatchFace {
     var introLayer;
     var introLayerReady;
     var introLayerFailed;
+    var ringSegments;
 
     function initialize() {
         WatchFace.initialize();
@@ -52,6 +53,7 @@ class RetroInstinctView extends WatchUi.WatchFace {
         awakeUntil = 0;
         introLayerReady = false;
         introLayerFailed = false;
+        ringSegments = 0;
         phoneOffIcon = [0x1FE, 0x3FF, 0x303, 0x34B, 0x333, 0x333, 0x34B, 0x303, 0x303, 0x3FF, 0x3CF, 0x1FE]; // 10x12
     }
 
@@ -116,10 +118,16 @@ class RetroInstinctView extends WatchUi.WatchFace {
         awakeUntil = introStart + AWAKE_MS;
         introLayerReady = false;
         introLayerFailed = false;
-        if (animTimer == null) {
-            animTimer = new Timer.Timer();
+        // Timers are only allowed in high-power mode. If the face is shown while the watch sleeps,
+        // skip the intro and draw the static face instead of crashing.
+        try {
+            if (animTimer == null) {
+                animTimer = new Timer.Timer();
+            }
+            animTimer.start(method(:onAnimationTick), 50, true);
+        } catch (ex) {
+            introStart = null;
         }
-        animTimer.start(method(:onAnimationTick), 50, true);
     }
 
     private function stopAnimation() as Void {
@@ -163,8 +171,7 @@ class RetroInstinctView extends WatchUi.WatchFace {
 
         // Animated parts: the step ring draws itself and charges up to the real progress, and the
         // cross rays grow, then pulse (full, half, off, half) while the watch is awake.
-        var activityInfo = ActivityMonitor.getInfo();
-        var ringSegments = RetroFormat.stepMeterSegments(activityInfo.steps, activityInfo.stepGoal);
+        // ringSegments is refreshed by every full render, so intro frames do not query activity data.
         drawStepRing(dc, dateX, dateY, ringRadius, RetroFormat.animatedCount(ringSegments, progress), RetroFormat.animatedCount(10, progress));
         drawCrossRays(dc, centerX - 15, centerY + CROSS_Y_OFFSET, RetroFormat.rayScale(progress, System.getTimer(), awakeUntil, System.getClockTime().sec));
     }
@@ -232,6 +239,7 @@ class RetroInstinctView extends WatchUi.WatchFace {
 
         // --- DATA FETCHING ---
         var activityInfo = ActivityMonitor.getInfo();
+        ringSegments = RetroFormat.stepMeterSegments(activityInfo.steps, activityInfo.stepGoal);
         var sysStats = System.getSystemStats();
         var settings = System.getDeviceSettings();
         var clock = System.getClockTime();
