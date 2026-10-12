@@ -74,7 +74,7 @@ class RetroInstinctView extends WatchUi.WatchFace {
         dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
 
         // Dithered vignette that fades in toward the round bottom edge (176x60, precomputed so it
-        // costs one drawBitmap; its dots keep a 3px margin around the stats and the cross).
+        // costs one drawBitmap). The stat values are outlined so they stay readable over it.
         dc.drawBitmap(0, centerY + 28, vignette);
 
         // --- DATA FETCHING ---
@@ -115,7 +115,7 @@ class RetroInstinctView extends WatchUi.WatchFace {
 
         // Draw Footprint Icon
         dc.drawBitmap(centerX - spacing - 16, iconTop, footprintIcon);
-        dc.drawText(centerX - spacing, textY, fontSmall, stepStr, Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+        drawOutlinedText(dc, centerX - spacing, textY, stepStr);
 
         // 2. HEART RATE (Right)
         // Draw Heart Icon
@@ -128,7 +128,22 @@ class RetroInstinctView extends WatchUi.WatchFace {
         if (!settings.phoneConnected) {
             drawPixelArt(dc, centerX + 52, iconTop + 10, phoneOffIcon, 10);
         }
-        dc.drawText(centerX + spacing, textY, fontSmall, getHeartRate(now.value() / 60), Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+        drawOutlinedText(dc, centerX + spacing, textY, getHeartRate(now.value() / 60));
+    }
+
+    // White text with a 1px black outline, so it stays readable over the dotted vignette.
+    private function drawOutlinedText(dc as Dc, x as Number, y as Number, text as String) as Void {
+        var justify = Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER;
+        dc.setColor(Graphics.COLOR_BLACK, Graphics.COLOR_TRANSPARENT);
+        for (var dy = -1; dy <= 1; dy++) {
+            for (var dx = -1; dx <= 1; dx++) {
+                if (dx != 0 || dy != 0) {
+                    dc.drawText(x + dx, y + dy, fontSmall, text, justify);
+                }
+            }
+        }
+        dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
+        dc.drawText(x, y, fontSmall, text, justify);
     }
 
     // Status row centered on x: mini battery, then the percentage; a bolt replaces "%" while charging.
